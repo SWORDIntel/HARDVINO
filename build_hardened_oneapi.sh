@@ -1,0 +1,164 @@
+#!/bin/bash
+# ============================================================================
+# HARDVINO - Hardened OneAPI Build Script
+# Builds OneAPI TBB and oneDNN with military-grade hardening
+# ============================================================================
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BUILD_DIR="${SCRIPT_DIR}/build"
+INSTALL_PREFIX="${SCRIPT_DIR}/install"
+
+# Source NPU military configuration
+source "${SCRIPT_DIR}/npu_military_config.sh"
+
+# ============================================================================
+# COLOR OUTPUT
+# ============================================================================
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+log_info() {
+    echo -e "${GREEN}[INFO]${NC} $1"
+}
+
+log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+# ============================================================================
+# BUILD ONEDNN (Deep Neural Network Library)
+# ============================================================================
+
+build_onednn() {
+    log_info "Building oneDNN with hardening..."
+
+    mkdir -p "${BUILD_DIR}/oneapi-dnn"
+    cd "${BUILD_DIR}/oneapi-dnn"
+
+    # Configure with hardened flags
+    cmake "${SCRIPT_DIR}/oneapi-dnn" \
+        -GNinja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX="${INSTALL_PREFIX}/oneapi-dnn" \
+        -DCMAKE_C_FLAGS="${CFLAGS_NPU_HARDENED}" \
+        -DCMAKE_CXX_FLAGS="${CFLAGS_NPU_HARDENED} -std=c++17" \
+        -DCMAKE_EXE_LINKER_FLAGS="${LDFLAGS_NPU_HARDENED}" \
+        -DCMAKE_SHARED_LINKER_FLAGS="${LDFLAGS_NPU_HARDENED}" \
+        -DDNNL_CPU_RUNTIME=TBB \
+        -DDNNL_GPU_RUNTIME=NONE \
+        -DDNNL_BUILD_TESTS=OFF \
+        -DDNNL_BUILD_EXAMPLES=OFF \
+        -DDNNL_ENABLE_CONCURRENT_EXEC=ON \
+        -DDNNL_ENABLE_PRIMITIVE_CACHE=ON \
+        -DDNNL_ENABLE_MAX_CPU_ISA=ON \
+        -DDNNL_ENABLE_CPU_ISA_HINTS=ON \
+        -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+        -DTBB_DIR="${INSTALL_PREFIX}/oneapi-tbb/lib/cmake/TBB"
+
+    ninja -j$(nproc)
+    ninja install
+
+    log_info "oneDNN built and installed successfully"
+}
+
+# ============================================================================
+# BUILD ONETBB (Threading Building Blocks)
+# ============================================================================
+
+build_onetbb() {
+    log_info "Building oneTBB with hardening..."
+
+    mkdir -p "${BUILD_DIR}/oneapi-tbb"
+    cd "${BUILD_DIR}/oneapi-tbb"
+
+    cmake "${SCRIPT_DIR}/oneapi-tbb" \
+        -GNinja \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX="${INSTALL_PREFIX}/oneapi-tbb" \
+        -DCMAKE_C_FLAGS="${CFLAGS_NPU_HARDENED}" \
+        -DCMAKE_CXX_FLAGS="${CFLAGS_NPU_HARDENED} -std=c++17" \
+        -DCMAKE_EXE_LINKER_FLAGS="${LDFLAGS_NPU_HARDENED}" \
+        -DCMAKE_SHARED_LINKER_FLAGS="${LDFLAGS_NPU_HARDENED}" \
+        -DTBB_TEST=OFF \
+        -DTBB_EXAMPLES=OFF \
+        -DTBB_STRICT=OFF \
+        -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+
+    ninja -j$(nproc)
+    ninja install
+
+    log_info "oneTBB built and installed successfully"
+}
+
+# ============================================================================
+# VERIFICATION
+# ============================================================================
+
+verify_oneapi() {
+    log_info "Verifying OneAPI installation..."
+
+    # Check oneTBB
+    if [ -f "${INSTALL_PREFIX}/oneapi-tbb/lib/libtbb.so" ]; then
+        log_info "✓ oneTBB library found"
+    else
+        log_error "oneTBB library not found"
+        return 1
+    fi
+
+    # Check oneDNN
+    if [ -f "${INSTALL_PREFIX}/oneapi-dnn/lib/libdnnl.so" ]; then
+        log_info "✓ oneDNN library found"
+    else
+        log_error "oneDNN library not found"
+        return 1
+    fi
+
+    # Verify hardening if checksec available
+    if command -v checksec &> /dev/null; then
+        log_info "Checking hardening flags..."
+        checksec --file="${INSTALL_PREFIX}/oneapi-tbb/lib/libtbb.so" || true
+        checksec --file="${INSTALL_PREFIX}/oneapi-dnn/lib/libdnnl.so" || true
+    fi
+
+    log_info "OneAPI verification complete"
+}
+
+# ============================================================================
+# MAIN
+# ============================================================================
+
+main() {
+    echo "╔══════════════════════════════════════════════════════════════════════════╗"
+    echo "║  HARDVINO - Hardened OneAPI Build System                                ║"
+    echo "╚══════════════════════════════════════════════════════════════════════════╝"
+    echo ""
+
+    # Build oneTBB first (oneDNN depends on it)
+    build_onetbb
+    build_onednn
+    verify_oneapi
+
+    echo ""
+    echo "╔══════════════════════════════════════════════════════════════════════════╗"
+    echo "║  ONEAPI BUILD COMPLETE                                                   ║"
+    echo "╚══════════════════════════════════════════════════════════════════════════╝"
+    echo ""
+    echo "oneTBB installed to: ${INSTALL_PREFIX}/oneapi-tbb"
+    echo "oneDNN installed to: ${INSTALL_PREFIX}/oneapi-dnn"
+    echo ""
+}
+
+if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
+    main "$@"
+fi
