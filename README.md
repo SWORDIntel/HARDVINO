@@ -4,6 +4,25 @@
 
 HARDVINO is a comprehensive, security-hardened build system for OpenVINO and OneAPI libraries, specifically optimized for the Intel Core Ultra 7 165H (Meteor Lake) with military-grade NPU support. This repository is designed to be integrated as a submodule into kernel compilation suites, providing hardened AI inference capabilities directly in kernel space.
 
+## 🎯 AVX2-First Architecture
+
+**IMPORTANT**: HARDVINO uses an **AVX2-first workflow** optimized for Meteor Lake processors.
+
+- ✅ **Optimized for**: AVX2 + AVX-VNNI (AI/ML acceleration)
+- ❌ **NOT using**: AVX-512 (not supported on Meteor Lake hardware)
+- ⚡ **Performance**: Optimal power efficiency and thermal characteristics
+- 📚 **Documentation**: See `AVX2_FIRST_WORKFLOW.md` for complete details
+
+### Why AVX2-First?
+
+Intel Meteor Lake (Core Ultra 7 165H) provides **AVX-VNNI** on AVX2 width, delivering:
+- INT8 VNNI operations for neural network acceleration
+- Better sustained performance (no thermal throttling)
+- Lower power consumption vs hypothetical AVX-512
+- Optimal for 6P+10E hybrid architecture
+
+**Quick Start**: The default configuration is already optimal - no changes needed!
+
 ## Features
 
 ### Security Hardening (ImageHarden-Inspired)
@@ -24,15 +43,16 @@ HARDVINO is a comprehensive, security-hardened build system for OpenVINO and One
   - DMA isolation
   - Firmware validation
 
-### Performance Optimization
+### Performance Optimization (AVX2-First)
 
 - **Meteor Lake Specific**
   - Native `-march=meteorlake` tuning
   - Hybrid core awareness (6P + 10E)
-  - AVX2, AVX-VNNI, FMA optimizations
+  - **AVX2 + AVX-VNNI** optimizations (primary SIMD path)
   - AES-NI, SHA, GFNI cryptographic acceleration
   - BMI, BMI2 bit manipulation
   - Link-Time Optimization (LTO)
+  - **AVX-512 explicitly disabled** (not supported on Meteor Lake)
 
 - **NPU VPU 3720 Military Mode**
   - 1.85 GHz turbo frequency
@@ -284,16 +304,17 @@ checksec --file=install/openvino/lib/libopenvino.so
 -march=native -mtune=native
 ```
 
-### Instruction Set Extensions
+### Instruction Set Extensions (AVX2-First)
 
 - **SSE/AVX**: SSE4.2, AVX, AVX2, FMA, F16C
-- **AI/ML**: AVX-VNNI (Vector Neural Network Instructions)
+- **AI/ML**: **AVX-VNNI** (Vector Neural Network Instructions) ⭐ Primary ML acceleration
 - **Cryptographic**: AES, VAES, PCLMUL, VPCLMULQDQ, SHA, GFNI
 - **Bit Manipulation**: BMI, BMI2, LZCNT, POPCNT
 - **Memory**: MOVBE, MOVDIRI, MOVDIR64B, CLFLUSHOPT, CLWB, CLDEMOTE
 - **Advanced**: ADX, RDRND, RDSEED, FSGSBASE, XSAVE family
 - **Control Flow**: WAITPKG, UINTR, SERIALIZE, TSXLDTRK
 - **Security**: CET, SHSTK (Control-flow Enforcement Technology)
+- **NOT SUPPORTED**: AVX-512F, AVX-512BW, AVX-512DQ (not available on Meteor Lake)
 
 ## Performance Tuning
 
@@ -406,13 +427,15 @@ HARDVINO/
 ├── openvino/                      # OpenVINO submodule
 ├── oneapi-tbb/                    # oneTBB submodule
 ├── oneapi-dnn/                    # oneDNN submodule
-├── meteor_lake_flags_ultimate/    # Compiler optimization flags
+├── meteor_lake_flags_ultimate/    # Compiler optimization flags (AVX2-first)
 ├── example_module/                # Example kernel module (generated)
 ├── build_all.sh                   # Master build script
-├── build_hardened_openvino.sh     # OpenVINO build script
-├── build_hardened_oneapi.sh       # OneAPI build script
+├── build_hardened_openvino.sh     # OpenVINO build script (AVX2-first)
+├── build_hardened_oneapi.sh       # OneAPI build script (AVX2-first)
 ├── kernel_integration.sh          # Kernel integration setup
 ├── npu_military_config.sh         # NPU configuration
+├── AVX2_FIRST_WORKFLOW.md         # ⭐ AVX2-first architecture guide
+├── AVX2_OPTIMIZATION_QUICK_GUIDE.md  # ⭐ Quick optimization reference
 ├── kernel_config.mk               # Kernel build config (generated)
 ├── Kbuild.mk                      # Kernel Makefile integration (generated)
 ├── KERNEL_INTEGRATION.md          # Kernel integration guide (generated)
