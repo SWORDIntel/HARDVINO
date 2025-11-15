@@ -51,7 +51,7 @@ Line 63:  -DDNNL_ENABLE_CPU_ISA_HINTS=ON           # Runtime detection
 -mmovbe -mmovdiri -mmovdir64b -mclflushopt -mclwb -mcldemote
 
 # Advanced Features
--mwaitpkg -mserialize -mtsxldtrk -muintr -mprefetchw -mprfchw
+-mwaitpkg -mserialize -mtsxldtrk -muintr -mprfchw
 ```
 
 ### Security & Hardening Variant: `CFLAGS_NPU_HARDENED`
@@ -60,8 +60,7 @@ Line 63:  -DDNNL_ENABLE_CPU_ISA_HINTS=ON           # Runtime detection
 Combines CFLAGS_OPTIMAL with:
 - `-D_FORTIFY_SOURCE=3`
 - `-fstack-protector-strong`
-- `-fcf-protection=full`
-- `-mindirect-branch=thunk`
+- `-fcf-protection=full` (provides Spectre v2 mitigation via Control-Flow Enforcement Technology)
 - All other security flags
 
 ---

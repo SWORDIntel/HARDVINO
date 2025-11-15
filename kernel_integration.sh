@@ -400,9 +400,7 @@ HARDVINO applies the following hardening measures (based on ImageHarden principl
 - `-D_FORTIFY_SOURCE=3` - Buffer overflow protection
 - `-fstack-protector-strong` - Stack canaries
 - `-fstack-clash-protection` - Stack clash protection
-- `-fcf-protection=full` - Control-flow integrity
-- `-mindirect-branch=thunk` - Spectre v2 mitigation
-- `-mfunction-return=thunk` - Return trampoline
+- `-fcf-protection=full` - Control-flow integrity and Spectre v2 mitigation via CET
 - `-fPIE -pie` - Position independent executable
 - Full RELRO (`-Wl,-z,relro,-z,now`)
 

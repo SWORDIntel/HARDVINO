@@ -141,9 +141,6 @@ export CFLAGS_NPU_HARDENED="$CFLAGS_NPU_MILITARY \
     -fstack-protector-strong \
     -fstack-clash-protection \
     -fcf-protection=full \
-    -mindirect-branch=thunk \
-    -mfunction-return=thunk \
-    -mindirect-branch-register \
     -fno-delete-null-pointer-checks \
     -fno-strict-overflow \
     -fwrapv"

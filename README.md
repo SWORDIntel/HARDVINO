@@ -30,12 +30,9 @@ Intel Meteor Lake (Core Ultra 7 165H) provides **AVX-VNNI** on AVX2 width, deliv
 - **Compile-Time Hardening**
   - `_FORTIFY_SOURCE=3` - Advanced buffer overflow detection
   - Stack protectors (strong + clash protection)
-  - Control-Flow Integrity (CFI) with CET
+  - Control-Flow Integrity (CFI) with CET - Spectre/Meltdown mitigation
   - Full RELRO + PIE
-  - Spectre/Meltdown mitigations
   - Position Independent Code (PIC)
-  - `-mindirect-branch=thunk` - Indirect branch protection
-  - `-mfunction-return=thunk` - Return trampoline
 
 - **Runtime Hardening**
   - Kernel-space sandboxing ready
@@ -258,9 +255,6 @@ Based on ImageHarden security principles:
 -fstack-protector-strong
 -fstack-clash-protection
 -fcf-protection=full
--mindirect-branch=thunk
--mfunction-return=thunk
--mindirect-branch-register
 -fPIE -pie
 -Wl,-z,relro,-z,now
 -Wl,-z,noexecstack

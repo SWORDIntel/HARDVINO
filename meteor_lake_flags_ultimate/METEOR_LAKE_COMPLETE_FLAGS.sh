@@ -89,8 +89,8 @@ export ISA_MEMORY="-mmovbe -mmovdiri -mmovdir64b -mclflushopt -mclwb -mcldemote"
 # Advanced Features
 export ISA_ADVANCED="-madx -mrdrnd -mrdseed -mfsgsbase -mfxsr -mxsave -mxsaveopt -mxsavec -mxsaves"
 
-# Prefetch Instructions
-export ISA_PREFETCH="-mprefetchw -mprfchw -mprefetchwt1"
+# Prefetch Instructions (removed -mprefetchw due to GCC 13 incompatibility)
+export ISA_PREFETCH="-mprfchw -mprefetchwt1"
 
 # Control Flow
 export ISA_CONTROL="-mwaitpkg -muintr -mserialize -mtsxldtrk"
@@ -142,7 +142,6 @@ export CFLAGS_OPTIMAL="\
 -mserialize \
 -mtsxldtrk \
 -muintr \
--mprefetchw \
 -mprfchw \
 -mrdrnd \
 -mrdseed \

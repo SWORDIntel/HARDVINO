@@ -114,7 +114,6 @@ HARDVINO is a hardened OpenVINO/OneAPI build system optimized for Intel Meteor L
 -mserialize     # Serialize instruction
 -mtsxldtrk      # TSX load tracking
 -muintr         # User-level interrupts
--mprefetchw     # Prefetch write
 -mprfchw        # Prefetch for write
 ```
 
@@ -235,7 +234,7 @@ CFLAGS_OPTIMAL (Complete optimal set)
     ├── ISA_CRYPTO (-maes -mvaes -mpclmul...)
     ├── ISA_MEMORY (-mmovbe -mmovdiri...)
     ├── ISA_ADVANCED (-madx -mrdrnd...)
-    ├── ISA_PREFETCH (-mprefetchw...)
+    ├── ISA_PREFETCH (-mprfchw...)
     ├── ISA_CONTROL (-mwaitpkg -muintr...)
     └── ISA_CET (-mcet -mshstk)
 
@@ -350,19 +349,15 @@ CFLAGS_SECURITY="\
 -Wl,-z,relro \
 -Wl,-z,now \
 -Wl,-z,noexecstack \
--Wl,-z,separate-code \
--mindirect-branch=thunk \
--mfunction-return=thunk \
--mindirect-branch-register"
+-Wl,-z,separate-code"
 ```
 
 **Hardening Features:**
 1. **Buffer Overflow Protection:** `_FORTIFY_SOURCE=3` (Level 3)
 2. **Stack Protectors:** `-fstack-protector-strong` + `-fstack-clash-protection`
-3. **Control-Flow Integrity:** `-fcf-protection=full` (CET support)
+3. **Control-Flow Integrity:** `-fcf-protection=full` (CET support) - provides Spectre v2 mitigation
 4. **Position Independence:** `-fpie -pie -fPIC`
-5. **Indirect Branch Protection:** `-mindirect-branch=thunk` + `-mfunction-return=thunk`
-6. **Memory Protection:** `-Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -Wl,-z,separate-code`
+5. **Memory Protection:** `-Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -Wl,-z,separate-code`
 
 ### 5.2 Security Hardening Integration
 
