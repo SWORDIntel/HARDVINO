@@ -387,7 +387,7 @@ Exports kernel-compatible configuration to `kernel_config.mk`:
 
 ```bash
 KCFLAGS="\
--O3 \
+-O2 \
 -pipe \
 -march=meteorlake \
 -mtune=meteorlake \
@@ -458,7 +458,7 @@ KBUILD_CFLAGS += $(HARDVINO_KCFLAGS)
 ```bash
 # AVX2-First Profile (Meteor Lake optimized)
 export CFLAGS_AVX2_OPTIMIZED="\
--O3 \
+-O2 \
 -march=meteorlake \
 -mtune=meteorlake \
 -mavx2 \
@@ -632,7 +632,7 @@ The codebase is already designed with AVX2 as the primary target:
 | `-mfma` | Fused Multiply-Add | ✅ Enabled |
 | `-mavxvnni` | Vector Neural Networks | ✅ Enabled |
 | `-march=meteorlake` | CPU-specific tuning | ✅ Enabled |
-| `-O3` | Optimization level | ✅ Enabled |
+| `-O2` | Optimization level | ✅ Enabled |
 | `-flto=auto` | Link-Time Optimization | ✅ Enabled |
 
 ---

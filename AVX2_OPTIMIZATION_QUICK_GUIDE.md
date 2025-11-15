@@ -312,7 +312,7 @@ export OMP_PLACES=cores
 export CFLAGS_OPTIMAL="$CFLAGS_OPTIMAL -Ofast -ffast-math"
 
 # For balanced (recommended)
-export CFLAGS_OPTIMAL="$CFLAGS_OPTIMAL -O3"  # Default
+export CFLAGS_OPTIMAL="$CFLAGS_OPTIMAL -O2"  # Default
 
 # For debugging
 export CFLAGS_DEBUG="$CFLAGS_DEBUG -Og -g3 -fno-omit-frame-pointer"

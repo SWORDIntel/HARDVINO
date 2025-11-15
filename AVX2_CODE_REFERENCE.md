@@ -156,7 +156,7 @@ cmake "${SCRIPT_DIR}/oneapi-dnn" \
 
 ```bash
 export CFLAGS_OPTIMAL="\
--O3 \
+-O2 \
 -pipe \
 -fomit-frame-pointer \
 -funroll-loops \
@@ -289,10 +289,7 @@ export CFLAGS_SECURITY="\
 -Wl,-z,relro \
 -Wl,-z,now \
 -Wl,-z,noexecstack \
--Wl,-z,separate-code \
--mindirect-branch=thunk \
--mfunction-return=thunk \
--mindirect-branch-register"
+-Wl,-z,separate-code"
 ```
 
 ---
@@ -305,7 +302,7 @@ export CFLAGS_SECURITY="\
 
 ```bash
 export KCFLAGS="\
--O3 \
+-O2 \
 -pipe \
 -march=meteorlake \
 -mtune=meteorlake \

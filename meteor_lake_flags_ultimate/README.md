@@ -17,7 +17,7 @@
 
 ### One-Line Optimal Flags
 ```bash
-export CFLAGS_OPTIMAL="-O3 -pipe -fomit-frame-pointer -funroll-loops -fstrict-aliasing -fno-plt -fdata-sections -ffunction-sections -flto=auto -march=meteorlake -mtune=meteorlake -msse4.2 -mpopcnt -mavx -mavx2 -mfma -mf16c -mbmi -mbmi2 -mlzcnt -mmovbe -mavxvnni -maes -mvaes -mpclmul -mvpclmulqdq -msha -mgfni -madx -mclflushopt -mclwb -mcldemote -mmovdiri -mmovdir64b -mwaitpkg -mserialize -mtsxldtrk -muintr -mprfchw -mrdrnd -mrdseed"
+export CFLAGS_OPTIMAL="-O2 -pipe -fomit-frame-pointer -funroll-loops -fstrict-aliasing -fno-plt -fdata-sections -ffunction-sections -flto=auto -march=meteorlake -mtune=meteorlake -msse4.2 -mpopcnt -mavx -mavx2 -mfma -mf16c -mbmi -mbmi2 -mlzcnt -mmovbe -mavxvnni -maes -mvaes -mpclmul -mvpclmulqdq -msha -mgfni -madx -mclflushopt -mclwb -mcldemote -mmovdiri -mmovdir64b -mwaitpkg -mserialize -mtsxldtrk -muintr -mprfchw -mrdrnd -mrdseed"
 ```
 
 ### Quick Test
@@ -45,7 +45,7 @@ echo 'int main(){return 0;}' | gcc -xc $CFLAGS_OPTIMAL - -o /tmp/test && echo "�
 ### 🎯 **COMPLETE OPTIMAL SET**
 ```bash
 # Base optimization
-CFLAGS_BASE="-O3 -pipe -fomit-frame-pointer -funroll-loops -fstrict-aliasing -fno-plt -fdata-sections -ffunction-sections -flto=auto -fuse-linker-plugin"
+CFLAGS_BASE="-O2 -pipe -fomit-frame-pointer -funroll-loops -fstrict-aliasing -fno-plt -fdata-sections -ffunction-sections -flto=auto -fuse-linker-plugin"
 
 # Architecture 
 ARCH_FLAGS="-march=meteorlake -mtune=meteorlake"
@@ -78,7 +78,7 @@ export LDFLAGS_OPTIMAL="-Wl,--as-needed -Wl,--gc-sections -Wl,-O1 -Wl,--hash-sty
 ### 📦 **MINIMAL HIGH-PERFORMANCE SET**
 ```bash
 # If the full set causes issues, use this minimal set
-export CFLAGS_MINIMAL="-O3 -march=meteorlake -mtune=meteorlake -mavx2 -mfma -mavxvnni -maes -msha -pipe -flto=auto"
+export CFLAGS_MINIMAL="-O2 -march=meteorlake -mtune=meteorlake -mavx2 -mfma -mavxvnni -maes -msha -pipe -flto=auto"
 ```
 
 ---
@@ -88,7 +88,7 @@ export CFLAGS_MINIMAL="-O3 -march=meteorlake -mtune=meteorlake -mavx2 -mfma -mav
 ### 🐧 **Linux Kernel Flags**
 ```bash
 # Kernel-specific optimizations
-export KCFLAGS="-O3 -pipe -march=meteorlake -mtune=meteorlake -mavx2 -mfma -mavxvnni -maes -mvaes -mpclmul -mvpclmulqdq -msha -mgfni -falign-functions=32 -falign-jumps=32 -falign-loops=32"
+export KCFLAGS="-O2 -pipe -march=meteorlake -mtune=meteorlake -mavx2 -mfma -mavxvnni -maes -mvaes -mpclmul -mvpclmulqdq -msha -mgfni -falign-functions=32 -falign-jumps=32 -falign-loops=32"
 
 export KCPPFLAGS="$KCFLAGS"
 
@@ -149,10 +149,7 @@ export CFLAGS_SECURE="$CFLAGS_OPTIMAL \
     -fpie \
     -fPIC \
     -Wformat -Wformat-security \
-    -Werror=format-security \
-    -mindirect-branch=thunk \
-    -mfunction-return=thunk \
-    -mindirect-branch-register"
+    -Werror=format-security"
 
 # Linker flags
 export LDFLAGS_SECURE="-Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -Wl,-z,separate-code -pie"
@@ -200,14 +197,14 @@ export GOMP_CPU_AFFINITY="0-5"  # Pin to P-cores
 
 ### CMake
 ```cmake
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -march=meteorlake -mtune=meteorlake -mavx2 -mavxvnni")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=meteorlake -mtune=meteorlake -mavx2 -mavxvnni")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2 -march=meteorlake -mtune=meteorlake -mavx2 -mavxvnni")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -march=meteorlake -mtune=meteorlake -mavx2 -mavxvnni")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -flto=auto")
 ```
 
 ### Meson
 ```meson
-add_project_arguments('-O3', '-march=meteorlake', '-mavxvnni', language: 'c')
+add_project_arguments('-O2', '-march=meteorlake', '-mavxvnni', language: 'c')
 add_project_link_arguments('-flto=auto', language: 'c')
 ```
 
@@ -319,8 +316,8 @@ compile_pgo()      # Build with PGO
 
 | Use Case | Flags Variable | Key Options |
 |----------|---------------|-------------|
-| **General** | `$CFLAGS_OPTIMAL` | `-O3 -march=meteorlake -mavxvnni` |
-| **Kernel** | `$KCFLAGS` | `-O3 -march=meteorlake -falign-functions=32` |
+| **General** | `$CFLAGS_OPTIMAL` | `-O2 -march=meteorlake -mavxvnni` |
+| **Kernel** | `$KCFLAGS` | `-O2 -march=meteorlake -falign-functions=32` |
 | **Security** | `$CFLAGS_SECURE` | `-D_FORTIFY_SOURCE=3 -fstack-protector-strong` |
 | **Speed** | `$CFLAGS_SPEED` | `-Ofast -ffast-math` |
 | **Debug** | `$CFLAGS_DEBUG` | `-Og -g3 -ggdb` |
