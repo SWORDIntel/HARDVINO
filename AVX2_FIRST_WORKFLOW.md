@@ -73,7 +73,7 @@ ISA_VNNI="-mavxvnni"  # ← This is the key for ML performance
 
 # Complete optimal flags include:
 CFLAGS_OPTIMAL="
--O3
+-O2
 -march=meteorlake -mtune=meteorlake
 -mavx -mavx2 -mfma -mf16c
 -mavxvnni  # ← AI acceleration
@@ -190,7 +190,7 @@ CPU: AVX2+VNNI for preprocessing, postprocessing, non-CNN ops
 # Tier 1: Must Have
 -march=meteorlake -mtune=meteorlake
 -mavx2 -mavxvnni
--O3 -flto=auto
+-O2 -flto=auto
 
 # Tier 2: Performance
 -mfma -mf16c

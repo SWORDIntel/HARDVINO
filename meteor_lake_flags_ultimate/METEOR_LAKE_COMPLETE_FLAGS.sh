@@ -44,8 +44,8 @@
 # SECTION 1: BASE OPTIMIZATION FLAGS
 # ============================================================================
 
-# Maximum Performance Base
-export CFLAGS_BASE="-O3 -pipe -fomit-frame-pointer -funroll-loops -fstrict-aliasing -fno-plt -fdata-sections -ffunction-sections -flto=auto -fuse-linker-plugin -fgraphite-identity -floop-nest-optimize -ftree-vectorize -ftree-slp-vectorize"
+# Maximum Performance Base (using -O2 for stability, -O3 available in CFLAGS_O3)
+export CFLAGS_BASE="-O2 -pipe -fomit-frame-pointer -funroll-loops -fstrict-aliasing -fno-plt -fdata-sections -ffunction-sections -flto=auto -fuse-linker-plugin -fgraphite-identity -floop-nest-optimize -ftree-vectorize -ftree-slp-vectorize"
 
 # Architecture Specific
 export ARCH_FLAGS="-march=meteorlake -mtune=meteorlake"
@@ -103,7 +103,7 @@ export ISA_CET="-mcet -mshstk"
 # ============================================================================
 
 export CFLAGS_OPTIMAL="\
--O3 \
+-O2 \
 -pipe \
 -fomit-frame-pointer \
 -funroll-loops \
