@@ -80,7 +80,7 @@ init_submodules() {
 
     cd "${SCRIPT_DIR}"
 
-    if [ ! -d "${OPENVINO_DIR}/.git" ]; then
+    if [ ! -f "${OPENVINO_DIR}/.git" ]; then
         log_error "OpenVINO submodule not found. Run: git submodule update --init --recursive"
         exit 1
     fi
