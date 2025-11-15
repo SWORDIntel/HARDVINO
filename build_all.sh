@@ -157,7 +157,7 @@ check_system_dependencies() {
         "pkg-config:pkg-config"
         "autoconf:autoconf"
         "automake:automake"
-        "libtool:libtool"
+        "libtoolize:libtool"
     )
 
     local missing_cmds=()
