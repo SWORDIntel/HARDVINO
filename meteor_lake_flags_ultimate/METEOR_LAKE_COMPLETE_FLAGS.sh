@@ -89,8 +89,8 @@ export ISA_MEMORY="-mmovbe -mmovdiri -mmovdir64b -mclflushopt -mclwb -mcldemote"
 # Advanced Features
 export ISA_ADVANCED="-madx -mrdrnd -mrdseed -mfsgsbase -mfxsr -mxsave -mxsaveopt -mxsavec -mxsaves"
 
-# Prefetch Instructions
-export ISA_PREFETCH="-mprefetchw -mprfchw -mprefetchwt1"
+# Prefetch Instructions (removed -mprefetchw due to GCC 13 incompatibility)
+export ISA_PREFETCH="-mprfchw -mprefetchwt1"
 
 # Control Flow
 export ISA_CONTROL="-mwaitpkg -muintr -mserialize -mtsxldtrk"
@@ -142,7 +142,6 @@ export CFLAGS_OPTIMAL="\
 -mserialize \
 -mtsxldtrk \
 -muintr \
--mprefetchw \
 -mprfchw \
 -mrdrnd \
 -mrdseed \
@@ -379,12 +378,44 @@ compile_pgo() {
 # SECTION 17: COMPLETE ENVIRONMENT SETUP
 # ============================================================================
 
-# Set all optimal flags
-export CC="gcc-13"
-export CXX="g++-13"
-export AR="gcc-ar"
-export NM="gcc-nm"
-export RANLIB="gcc-ranlib"
+# Detect best available GCC version (15, 14, 13, or system default)
+detect_gcc_and_set_tools() {
+    local gcc_ver=""
+    for ver in 15 14 13; do
+        if command -v "gcc-${ver}" &> /dev/null; then
+            gcc_ver="${ver}"
+            break
+        fi
+    done
+
+    if [ -z "$gcc_ver" ]; then
+        # Try to auto-install GCC 15
+        if command -v apt-get &> /dev/null; then
+            echo "GCC not found. Attempting to install GCC 15..."
+            if sudo apt-get update && sudo apt-get install -y gcc-15 g++-15 gcc-ar-15 gcc-nm-15 gcc-ranlib-15 2>/dev/null; then
+                gcc_ver="15"
+            fi
+        fi
+    fi
+
+    if [ -z "$gcc_ver" ]; then
+        # Fall back to system GCC
+        export CC="gcc"
+        export CXX="g++"
+        export AR="gcc-ar"
+        export NM="gcc-nm"
+        export RANLIB="gcc-ranlib"
+    else
+        export CC="gcc-${gcc_ver}"
+        export CXX="g++-${gcc_ver}"
+        export AR="gcc-ar-${gcc_ver}"
+        export NM="gcc-nm-${gcc_ver}"
+        export RANLIB="gcc-ranlib-${gcc_ver}"
+    fi
+}
+
+# Auto-detect and set compiler
+detect_gcc_and_set_tools
 
 # CPU Affinity for P-cores
 export GOMP_CPU_AFFINITY="0-5"

@@ -233,7 +233,6 @@ export CFLAGS_OPTIMAL="\
 -mserialize \
 -mtsxldtrk \
 -muintr \
--mprefetchw \
 -mprfchw \
 
 # ============================================
@@ -261,9 +260,6 @@ export CFLAGS_NPU_HARDENED="$CFLAGS_NPU_MILITARY \
     -fstack-protector-strong \
     -fstack-clash-protection \
     -fcf-protection=full \
-    -mindirect-branch=thunk \
-    -mfunction-return=thunk \
-    -mindirect-branch-register \
     -fno-delete-null-pointer-checks \
     -fno-strict-overflow \
     -fwrapv"
@@ -272,6 +268,7 @@ export CFLAGS_NPU_HARDENED="$CFLAGS_NPU_MILITARY \
 Where:
 - `$CFLAGS_NPU_MILITARY`: NPU-specific optimization flags
 - `$CFLAGS_SECURITY`: Security hardening flags (see below)
+- `-fcf-protection=full`: Control-Flow Enforcement Technology (CET) provides better Spectre v2 mitigation than thunk-based approaches
 - Additional security enhancements for kernel integration
 
 ### Security Hardening Flags

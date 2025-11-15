@@ -30,12 +30,9 @@ Intel Meteor Lake (Core Ultra 7 165H) provides **AVX-VNNI** on AVX2 width, deliv
 - **Compile-Time Hardening**
   - `_FORTIFY_SOURCE=3` - Advanced buffer overflow detection
   - Stack protectors (strong + clash protection)
-  - Control-Flow Integrity (CFI) with CET
+  - Control-Flow Integrity (CFI) with CET - Spectre/Meltdown mitigation
   - Full RELRO + PIE
-  - Spectre/Meltdown mitigations
   - Position Independent Code (PIC)
-  - `-mindirect-branch=thunk` - Indirect branch protection
-  - `-mfunction-return=thunk` - Return trampoline
 
 - **Runtime Hardening**
   - Kernel-space sandboxing ready
@@ -82,7 +79,7 @@ Intel Meteor Lake (Core Ultra 7 165H) provides **AVX-VNNI** on AVX2 width, deliv
 ### Software
 - Debian-based Linux (Ubuntu 22.04+ recommended)
 - Kernel 6.2+ (for NPU support)
-- GCC 11+ or Clang 14+
+- GCC 13+ or Clang 14+ (GCC 15 recommended, auto-installed if missing)
 - CMake 3.20+
 - Python 3.8+
 - Git
@@ -95,8 +92,6 @@ sudo apt-get install -y \
     git \
     cmake \
     ninja-build \
-    gcc-13 \
-    g++-13 \
     python3 \
     python3-pip \
     python3-dev \
@@ -107,6 +102,11 @@ sudo apt-get install -y \
     libssl-dev \
     libusb-1.0-0-dev \
     checksec
+```
+
+**Note:** GCC 15 will be automatically installed during the build if not already present. Alternatively, you can pre-install:
+```bash
+sudo apt-get install -y gcc-15 g++-15 gcc-ar-15 gcc-nm-15 gcc-ranlib-15
 ```
 
 ## Quick Start
@@ -258,9 +258,6 @@ Based on ImageHarden security principles:
 -fstack-protector-strong
 -fstack-clash-protection
 -fcf-protection=full
--mindirect-branch=thunk
--mfunction-return=thunk
--mindirect-branch-register
 -fPIE -pie
 -Wl,-z,relro,-z,now
 -Wl,-z,noexecstack

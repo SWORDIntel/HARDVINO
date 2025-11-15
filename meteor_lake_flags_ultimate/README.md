@@ -17,7 +17,7 @@
 
 ### One-Line Optimal Flags
 ```bash
-export CFLAGS_OPTIMAL="-O3 -pipe -fomit-frame-pointer -funroll-loops -fstrict-aliasing -fno-plt -fdata-sections -ffunction-sections -flto=auto -march=meteorlake -mtune=meteorlake -msse4.2 -mpopcnt -mavx -mavx2 -mfma -mf16c -mbmi -mbmi2 -mlzcnt -mmovbe -mavxvnni -maes -mvaes -mpclmul -mvpclmulqdq -msha -mgfni -madx -mclflushopt -mclwb -mcldemote -mmovdiri -mmovdir64b -mwaitpkg -mserialize -mtsxldtrk -muintr -mprefetchw -mprfchw -mrdrnd -mrdseed"
+export CFLAGS_OPTIMAL="-O3 -pipe -fomit-frame-pointer -funroll-loops -fstrict-aliasing -fno-plt -fdata-sections -ffunction-sections -flto=auto -march=meteorlake -mtune=meteorlake -msse4.2 -mpopcnt -mavx -mavx2 -mfma -mf16c -mbmi -mbmi2 -mlzcnt -mmovbe -mavxvnni -maes -mvaes -mpclmul -mvpclmulqdq -msha -mgfni -madx -mclflushopt -mclwb -mcldemote -mmovdiri -mmovdir64b -mwaitpkg -mserialize -mtsxldtrk -muintr -mprfchw -mrdrnd -mrdseed"
 ```
 
 ### Quick Test
@@ -63,7 +63,7 @@ CRYPTO_FLAGS="-maes -mvaes -mpclmul -mvpclmulqdq -msha -mgfni"
 MEMORY_FLAGS="-mmovbe -mmovdiri -mmovdir64b -mclflushopt -mclwb -mcldemote"
 
 # Advanced features
-ADVANCED_FLAGS="-mwaitpkg -mserialize -mtsxldtrk -muintr -mprefetchw -mprfchw"
+ADVANCED_FLAGS="-mwaitpkg -mserialize -mtsxldtrk -muintr -mprfchw"
 
 # Security features
 SECURITY_FLAGS="-mrdrnd -mrdseed -mfsgsbase -mfxsr -mxsave -mxsaveopt"
@@ -220,7 +220,15 @@ add_project_link_arguments('-flto=auto', language: 'c')
 
 ## Compiler-Specific
 
-### GCC 13+
+### GCC 15, 14, or 13+
+The build system automatically detects and uses the best available GCC:
+- **GCC 15** (preferred) - Latest optimizations for Meteor Lake
+- **GCC 14** - Fallback with excellent Meteor Lake support
+- **GCC 13** - Fallback for compatibility
+- **System GCC** - Last resort fallback
+
+GCC 15 will be auto-installed if not found on Debian-based systems.
+
 ```bash
 export GCC13_FLAGS="-std=gnu2x -fharden-compares -fharden-conditional-branches -ftrivial-auto-var-init=zero -fanalyzer"
 ```

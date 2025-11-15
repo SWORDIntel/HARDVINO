@@ -106,6 +106,15 @@ configure_openvino() {
     local CMAKE_CXX_FLAGS="${CFLAGS_NPU_HARDENED} -std=c++17"
     local CMAKE_EXE_LINKER_FLAGS="${LDFLAGS_NPU_HARDENED}"
 
+    # AVX2-FIRST ARCHITECTURE FOR METEOR LAKE
+    # Intel Core Ultra 7 165H (Meteor Lake) supports:
+    #   ✓ SSE4.2, AVX, AVX2, AVX-VNNI (AI acceleration)
+    #   ✗ NO AVX-512 support (not available on this platform)
+    # Design Decision: AVX2-First Workflow
+    # - AVX-VNNI provides AI/ML acceleration on AVX2 width (256-bit)
+    # - Better power efficiency and thermal characteristics
+    # - Optimal performance for Meteor Lake hybrid architecture
+    # - See AVX2_FIRST_WORKFLOW.md for detailed rationale
     cmake "${OPENVINO_DIR}" \
         -GNinja \
         -DCMAKE_BUILD_TYPE=Release \
@@ -142,24 +151,10 @@ configure_openvino() {
         -DENABLE_PROFILING_RAW=OFF \
         -DTHREADING=TBB \
         -DENABLE_TBBBIND_2_5=ON \
-        -DTBB_DIR="${INSTALL_PREFIX}/oneapi-tbb/lib/cmake/TBB" \
-        # ======================================================================
-        # AVX2-FIRST ARCHITECTURE FOR METEOR LAKE
-        # ======================================================================
-        # Intel Core Ultra 7 165H (Meteor Lake) supports:
-        #   ✓ SSE4.2, AVX, AVX2, AVX-VNNI (AI acceleration)
-        #   ✗ NO AVX-512 support (not available on this platform)
-        #
-        # Design Decision: AVX2-First Workflow
-        # - AVX-VNNI provides AI/ML acceleration on AVX2 width (256-bit)
-        # - Better power efficiency and thermal characteristics
-        # - Optimal performance for Meteor Lake hybrid architecture
-        # - See AVX2_FIRST_WORKFLOW.md for detailed rationale
-        # ======================================================================
+        -DTBB_DIR="${INSTALL_PREFIX}/oneapi-tbb/lib/cmake/tbb" \
         -DENABLE_SSE42=ON \
         -DENABLE_AVX2=ON \
         -DENABLE_AVX512F=OFF \
-        # ======================================================================
         -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
         -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
         -DCMAKE_CXX_VISIBILITY_PRESET=hidden \

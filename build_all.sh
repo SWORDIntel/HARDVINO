@@ -157,7 +157,7 @@ check_system_dependencies() {
         "pkg-config:pkg-config"
         "autoconf:autoconf"
         "automake:automake"
-        "libtool:libtool"
+        "libtoolize:libtool"
     )
 
     local missing_cmds=()
@@ -182,6 +182,45 @@ check_system_dependencies() {
     fi
 
     log_success "All dependencies satisfied"
+}
+
+# ============================================================================
+# GCC VERSION DETECTION & INSTALLATION
+# ============================================================================
+
+detect_gcc_version() {
+    log_info "Detecting GCC version..."
+
+    # Try to find the best available GCC (15, 14, 13 in order)
+    for gcc_ver in 15 14 13; do
+        if command -v "gcc-${gcc_ver}" &> /dev/null && command -v "g++-${gcc_ver}" &> /dev/null; then
+            export CC="gcc-${gcc_ver}"
+            export CXX="g++-${gcc_ver}"
+            log_success "Using GCC ${gcc_ver}"
+            return 0
+        fi
+    done
+
+    # Try to auto-install GCC 15
+    log_info "GCC 15 not found. Attempting to install..."
+    if sudo apt-get update && sudo apt-get install -y gcc-15 g++-15 gcc-ar-15 gcc-nm-15 gcc-ranlib-15; then
+        export CC="gcc-15"
+        export CXX="g++-15"
+        log_success "Installed and using GCC 15"
+        return 0
+    fi
+
+    # Fall back to system gcc/g++ if available
+    if command -v gcc &> /dev/null && command -v g++ &> /dev/null; then
+        local gcc_version=$(gcc --version | head -1)
+        export CC="gcc"
+        export CXX="g++"
+        log_warn "Could not install GCC 15. Using system GCC: ${gcc_version}"
+        return 0
+    fi
+
+    log_error "No suitable GCC found (requires GCC 13+)"
+    exit 1
 }
 
 # ============================================================================
@@ -213,7 +252,7 @@ init_submodules() {
     fi
 
     for submodule in "${critical_submodules[@]}"; do
-        if [ ! -d "${SCRIPT_DIR}/${submodule}/.git" ]; then
+        if [ ! -f "${SCRIPT_DIR}/${submodule}/.git" ]; then
             log_error "Critical submodule not initialized: ${submodule}"
             exit 1
         fi
@@ -404,6 +443,7 @@ main() {
 
     # Pre-build checks
     check_system_dependencies
+    detect_gcc_version
     init_submodules
 
     # Build components
