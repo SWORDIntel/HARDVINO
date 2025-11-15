@@ -49,8 +49,8 @@ check_dependencies() {
         "gcc"
         "g++"
         "python3"
-        "python3-pip"
-        "ninja-build"
+        "pip3"
+        "ninja"
         "pkg-config"
     )
 
@@ -224,7 +224,7 @@ verify_installation() {
     log_info "Verifying security hardening..."
 
     if command -v checksec &> /dev/null; then
-        checksec --file="${INSTALL_PREFIX}/openvino/lib/libopenvino.so" || true
+        checksec --file="${INSTALL_PREFIX}/openvino/runtime/lib/intel64/libopenvino.so" || true
     else
         log_warn "checksec not installed, skipping binary hardening verification"
         log_info "Install with: sudo apt-get install checksec"
