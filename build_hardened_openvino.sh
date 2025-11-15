@@ -102,8 +102,10 @@ configure_openvino() {
     cd "${BUILD_DIR}/openvino"
 
     # Combine all hardening flags
+    # Note: OpenVINO doesn't support FORTIFY_SOURCE=3, so we remove it
     local CMAKE_C_FLAGS="${CFLAGS_NPU_HARDENED}"
-    local CMAKE_CXX_FLAGS="${CFLAGS_NPU_HARDENED} -std=c++17"
+    CMAKE_C_FLAGS="${CMAKE_C_FLAGS//-D_FORTIFY_SOURCE=3/}"  # Remove incompatible FORTIFY_SOURCE
+    local CMAKE_CXX_FLAGS="${CMAKE_C_FLAGS} -std=c++17"
     local CMAKE_EXE_LINKER_FLAGS="${LDFLAGS_NPU_HARDENED}"
 
     # AVX2-FIRST ARCHITECTURE FOR METEOR LAKE
