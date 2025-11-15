@@ -130,7 +130,6 @@ configure_openvino() {
         -DENABLE_INTEL_CPU=ON \
         -DENABLE_INTEL_GPU=ON \
         -DENABLE_INTEL_NPU=ON \
-        -DENABLE_MYRIAD=ON \
         -DENABLE_AUTO=ON \
         -DENABLE_AUTO_BATCH=ON \
         -DENABLE_HETERO=ON \
