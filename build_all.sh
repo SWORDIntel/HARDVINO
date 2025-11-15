@@ -349,7 +349,11 @@ verify_build() {
     # Check OpenVINO
     if [ $SKIP_OPENVINO -eq 0 ]; then
         if [ ! -f "${SCRIPT_DIR}/install/openvino/lib/libopenvino.so" ]; then
-            log_error "OpenVINO library not found"
+            log_error "OpenVINO C++ library not found"
+            ((errors++))
+        fi
+        if [ ! -f "${SCRIPT_DIR}/install/openvino/lib/libopenvino_c.so" ]; then
+            log_error "OpenVINO C library not found"
             ((errors++))
         fi
     fi
