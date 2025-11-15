@@ -172,16 +172,43 @@ check_system_dependencies() {
     done
 
     if [ ${#missing_cmds[@]} -ne 0 ]; then
-        log_error "Missing dependencies: ${missing_cmds[*]}"
-        echo ""
-        echo "Install with:"
-        echo "  sudo apt-get update"
-        echo "  sudo apt-get install -y ${missing_pkgs[*]}"
-        echo ""
-        exit 1
-    fi
+        log_warn "Missing dependencies: ${missing_cmds[*]}"
+        log_info "Attempting automatic installation..."
 
-    log_success "All dependencies satisfied"
+        # Update package lists
+        if ! sudo apt-get update &> /dev/null; then
+            log_error "Failed to update package lists"
+            exit 1
+        fi
+
+        # Install missing packages
+        if ! sudo apt-get install -y "${missing_pkgs[@]}" &> /dev/null; then
+            log_error "Failed to install dependencies: ${missing_cmds[*]}"
+            echo ""
+            echo "Please install manually with:"
+            echo "  sudo apt-get install -y ${missing_pkgs[*]}"
+            echo ""
+            exit 1
+        fi
+
+        # Verify installation
+        local still_missing=()
+        for dep in "${deps[@]}"; do
+            IFS=':' read -r cmd pkg <<< "$dep"
+            if ! command -v "$cmd" &> /dev/null; then
+                still_missing+=("$cmd")
+            fi
+        done
+
+        if [ ${#still_missing[@]} -ne 0 ]; then
+            log_error "Installation failed for: ${still_missing[*]}"
+            exit 1
+        fi
+
+        log_success "Dependencies installed successfully"
+    else
+        log_success "All dependencies satisfied"
+    fi
 }
 
 # ============================================================================
