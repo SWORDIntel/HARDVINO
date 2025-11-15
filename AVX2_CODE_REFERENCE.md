@@ -289,10 +289,7 @@ export CFLAGS_SECURITY="\
 -Wl,-z,relro \
 -Wl,-z,now \
 -Wl,-z,noexecstack \
--Wl,-z,separate-code \
--mindirect-branch=thunk \
--mfunction-return=thunk \
--mindirect-branch-register"
+-Wl,-z,separate-code"
 ```
 
 ---

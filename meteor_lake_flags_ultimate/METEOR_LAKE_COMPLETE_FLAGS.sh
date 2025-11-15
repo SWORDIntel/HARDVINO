@@ -157,7 +157,8 @@ export CFLAGS_OPTIMAL="\
 # ============================================================================
 
 # PROFILE: Maximum Speed (No Safety)
-export CFLAGS_SPEED="-Ofast -ffast-math -funsafe-math-optimizations -ffinite-math-only -fno-signed-zeros -fno-trapping-math -frounding-math -fsingle-precision-constant -fcx-limited-range $CFLAGS_OPTIMAL"
+# Note: -Ofast replaces -O3 from CFLAGS_OPTIMAL, don't use both
+export CFLAGS_SPEED="-Ofast -pipe -fomit-frame-pointer -funroll-loops -fstrict-aliasing -fno-plt -fdata-sections -ffunction-sections -flto=auto -fuse-linker-plugin -march=meteorlake -mtune=meteorlake -msse4.2 -mpopcnt -mavx -mavx2 -mfma -mf16c -mbmi -mbmi2 -mlzcnt -mmovbe -mavxvnni -maes -mvaes -mpclmul -mvpclmulqdq -msha -mgfni -madx -mclflushopt -mclwb -mcldemote -mmovdiri -mmovdir64b -mwaitpkg -mserialize -mtsxldtrk -muintr -mprfchw -mrdrnd -mrdseed -ffast-math -funsafe-math-optimizations -ffinite-math-only -fno-signed-zeros -fno-trapping-math -frounding-math -fsingle-precision-constant -fcx-limited-range"
 
 # PROFILE: Balanced Performance
 export CFLAGS_BALANCED="-O2 -ftree-vectorize $ARCH_FLAGS $ISA_AVX $ISA_CRYPTO -pipe"
@@ -201,10 +202,7 @@ export CFLAGS_SECURITY="\
 -Wl,-z,relro \
 -Wl,-z,now \
 -Wl,-z,noexecstack \
--Wl,-z,separate-code \
--mindirect-branch=thunk \
--mfunction-return=thunk \
--mindirect-branch-register"
+-Wl,-z,separate-code"
 
 export LDFLAGS_SECURITY="-Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -Wl,-z,separate-code -pie"
 

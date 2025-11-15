@@ -149,10 +149,7 @@ export CFLAGS_SECURE="$CFLAGS_OPTIMAL \
     -fpie \
     -fPIC \
     -Wformat -Wformat-security \
-    -Werror=format-security \
-    -mindirect-branch=thunk \
-    -mfunction-return=thunk \
-    -mindirect-branch-register"
+    -Werror=format-security"
 
 # Linker flags
 export LDFLAGS_SECURE="-Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -Wl,-z,separate-code -pie"
