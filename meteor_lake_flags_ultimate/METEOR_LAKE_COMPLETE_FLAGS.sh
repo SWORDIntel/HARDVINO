@@ -39,7 +39,22 @@
 #
 # See: AVX2_FIRST_WORKFLOW.md for complete details
 # ============================================================================
-
+#
+# ============================================================================
+# AVX2-FIRST ARCHITECTURE - DEFAULT FOR METEOR LAKE P-CORES
+# ============================================================================
+#
+# CRITICAL: P-cores do NOT support AVX-512
+# All flags in this file use AVX2 + AVX-VNNI as the PRIMARY SIMD path
+# AVX-512 is explicitly disabled in all builds
+#
+# This ensures maximum compatibility and performance on:
+# - Intel Core Ultra 7 165H (Meteor Lake) P-cores: Limited to AVX2
+# - E-cores: Have no SIMD, use generic x86-64
+# - Hybrid architecture: Unified AVX2 path for both core types
+#
+# ============================================================================
+#
 # ============================================================================
 # SECTION 1: BASE OPTIMIZATION FLAGS
 # ============================================================================
@@ -64,18 +79,24 @@ export ARCH_FLAGS_NATIVE="-march=native -mtune=native -mcpu=native"
 export ISA_BASELINE="-msse -msse2 -msse3 -mssse3 -msse4 -msse4.1 -msse4.2"
 
 # Advanced Vector Extensions (AVX2-FIRST)
+# PRIMARY: AVX2 is the default SIMD path for all Meteor Lake builds
+# P-cores support: AVX, AVX2 (256-bit width)
+# E-cores support: Generic x86-64 only (no SIMD)
 export ISA_AVX="-mavx -mavx2 -mf16c -mfma"
 
 # AI/ML Acceleration (Meteor Lake Special) - THE SECRET WEAPON
 # AVX-VNNI provides INT8 VNNI instructions on AVX2 register width (256-bit)
 # This is the key instruction set for neural network acceleration on Meteor Lake
+# Combined with AVX2, this provides optimal ML performance
 export ISA_VNNI="-mavxvnni"  # Confirmed working on your system
 
-# NOTE: NO AVX-512 FLAGS
+# NOTE: NO AVX-512 FLAGS (CRITICAL FOR METEOR LAKE)
 # AVX-512 is explicitly NOT included because:
-# 1. Not supported on Meteor Lake hardware
+# 1. Not supported on Meteor Lake P-cores (hardware limitation)
 # 2. Would cause illegal instruction errors or suboptimal code generation
 # 3. AVX-VNNI on AVX2 provides equivalent performance for ML workloads
+# 4. AVX2+VNNI has better thermal and power characteristics
+# 5. Ensures unified code path for hybrid P+E core architecture
 
 # Bit Manipulation
 export ISA_BMI="-mbmi -mbmi2 -mlzcnt -mpopcnt"
