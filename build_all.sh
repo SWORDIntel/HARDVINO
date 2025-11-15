@@ -70,6 +70,7 @@ CLEAN_BUILD=0
 SKIP_ONEAPI=0
 SKIP_OPENVINO=0
 SKIP_KERNEL_INTEGRATION=0
+SKIP_MYRIAD=0
 VERBOSE=0
 
 usage() {
@@ -83,6 +84,7 @@ OPTIONS:
     --skip-oneapi          Skip OneAPI build
     --skip-openvino        Skip OpenVINO build
     --skip-kernel          Skip kernel integration setup
+    --skip-myriad          Skip MYRIAD VPU driver build
     --verbose              Verbose output
     -h, --help             Show this help message
 
@@ -112,6 +114,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --skip-kernel)
             SKIP_KERNEL_INTEGRATION=1
+            shift
+            ;;
+        --skip-myriad)
+            SKIP_MYRIAD=1
             shift
             ;;
         --verbose)
@@ -326,6 +332,106 @@ setup_kernel_integration() {
 }
 
 # ============================================================================
+# MYRIAD VPU DRIVER INTEGRATION
+# ============================================================================
+
+build_myriad_driver() {
+    if [ $SKIP_MYRIAD -eq 1 ]; then
+        log_warn "Skipping MYRIAD VPU driver build"
+        return
+    fi
+
+    log_build "Building MYRIAD VPU kernel driver..."
+
+    # Check if NUC2.1 submodule exists
+    if [ ! -d "${SCRIPT_DIR}/NUC2.1" ]; then
+        log_error "NUC2.1 submodule not found. Run: git submodule init && git submodule update"
+        return 1
+    fi
+
+    cd "${SCRIPT_DIR}/NUC2.1"
+
+    # Build kernel modules
+    if ! make > /dev/null 2>&1; then
+        log_error "MYRIAD kernel driver build failed"
+        log_warn "Check build output in NUC2.1/ directory"
+        return 1
+    fi
+
+    # Verify kernel modules were built
+    if [ ! -f "${SCRIPT_DIR}/NUC2.1/movidius_x_vpu.ko" ] || [ ! -f "${SCRIPT_DIR}/NUC2.1/vfio_movidius.ko" ]; then
+        log_error "MYRIAD kernel modules not found after build"
+        return 1
+    fi
+
+    log_success "MYRIAD kernel modules built successfully"
+}
+
+# ============================================================================
+# KERNEL MODULE MANAGEMENT
+# ============================================================================
+
+load_myriad_modules() {
+    if [ $SKIP_MYRIAD -eq 1 ]; then
+        log_warn "MYRIAD driver not built, skipping module load"
+        return
+    fi
+
+    log_info "Loading MYRIAD kernel modules..."
+
+    # Check if modules exist
+    if [ ! -f "${SCRIPT_DIR}/NUC2.1/movidius_x_vpu.ko" ] || [ ! -f "${SCRIPT_DIR}/NUC2.1/vfio_movidius.ko" ]; then
+        log_error "MYRIAD kernel modules not found. Build them first with --no-skip-myriad"
+        return 1
+    fi
+
+    # Check if already loaded
+    if lsmod | grep -q movidius_x_vpu; then
+        log_warn "MYRIAD modules already loaded"
+        return 0
+    fi
+
+    # Load modules with elevated privileges
+    if ! sudo insmod "${SCRIPT_DIR}/NUC2.1/vfio_movidius.ko"; then
+        log_error "Failed to load vfio_movidius.ko"
+        return 1
+    fi
+
+    if ! sudo insmod "${SCRIPT_DIR}/NUC2.1/movidius_x_vpu.ko"; then
+        log_error "Failed to load movidius_x_vpu.ko"
+        return 1
+    fi
+
+    # Verify devices created
+    sleep 1
+    if [ -e "/dev/movidius_x_vpu_0" ]; then
+        log_success "MYRIAD kernel modules loaded successfully"
+        ls -l /dev/movidius_x_vpu_* 2>/dev/null | head -3
+        return 0
+    else
+        log_error "MYRIAD device files not created"
+        return 1
+    fi
+}
+
+unload_myriad_modules() {
+    log_info "Unloading MYRIAD kernel modules..."
+
+    # Unload in reverse order
+    sudo rmmod movidius_x_vpu 2>/dev/null || true
+    sudo rmmod vfio_movidius 2>/dev/null || true
+
+    # Verify unloaded
+    if ! lsmod | grep -q movidius; then
+        log_success "MYRIAD kernel modules unloaded"
+        return 0
+    else
+        log_warn "Some MYRIAD modules may still be loaded"
+        return 1
+    fi
+}
+
+# ============================================================================
 # POST-BUILD VERIFICATION
 # ============================================================================
 
@@ -362,6 +468,18 @@ verify_build() {
     if [ $SKIP_KERNEL_INTEGRATION -eq 0 ]; then
         if [ ! -f "${SCRIPT_DIR}/kernel_config.mk" ]; then
             log_error "Kernel configuration not found"
+            ((errors++))
+        fi
+    fi
+
+    # Check MYRIAD driver
+    if [ $SKIP_MYRIAD -eq 0 ]; then
+        if [ ! -f "${SCRIPT_DIR}/NUC2.1/movidius_x_vpu.ko" ]; then
+            log_error "MYRIAD movidius_x_vpu.ko not found"
+            ((errors++))
+        fi
+        if [ ! -f "${SCRIPT_DIR}/NUC2.1/vfio_movidius.ko" ]; then
+            log_error "MYRIAD vfio_movidius.ko not found"
             ((errors++))
         fi
     fi
@@ -406,6 +524,10 @@ EOF
         echo "  ✓ Kernel Integration Files"
     fi
 
+    if [ $SKIP_MYRIAD -eq 0 ]; then
+        echo "  ✓ MYRIAD VPU Driver : ${SCRIPT_DIR}/NUC2.1"
+    fi
+
     cat << EOF
 
 Security Hardening Applied:
@@ -421,16 +543,18 @@ Architecture Optimizations:
   ✓ AVX2 + AVX-VNNI
   ✓ AES-NI + SHA extensions
   ✓ NPU VPU 3720 support
+  ✓ MYRIAD VPU (Movidius) acceleration
 
 Quick Start:
   1. Set up environment:
      source ${install_dir}/setupvars.sh
 
-  2. Initialize NPU:
-     init_npu_tactical
+  2. Load MYRIAD kernel driver:
+     cd ${SCRIPT_DIR}
+     ./build_all.sh --help  (see load_myriad_modules for automation)
 
-  3. Test NPU:
-     test_npu_military
+  3. Benchmark both accelerators:
+     ./benchmark_all_devices.sh  (NPU vs MYRIAD comparison)
 
 Kernel Integration:
   See KERNEL_INTEGRATION.md for detailed instructions
@@ -481,6 +605,7 @@ main() {
     build_oneapi
     build_openvino
     setup_kernel_integration
+    build_myriad_driver
 
     # Post-build verification
     if ! verify_build; then
