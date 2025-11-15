@@ -213,7 +213,7 @@ init_submodules() {
     fi
 
     for submodule in "${critical_submodules[@]}"; do
-        if [ ! -d "${SCRIPT_DIR}/${submodule}/.git" ]; then
+        if [ ! -f "${SCRIPT_DIR}/${submodule}/.git" ]; then
             log_error "Critical submodule not initialized: ${submodule}"
             exit 1
         fi
