@@ -219,11 +219,7 @@ export CFLAGS_SECURITY="\
 -fPIC \
 -Wformat \
 -Wformat-security \
--Werror=format-security \
--Wl,-z,relro \
--Wl,-z,now \
--Wl,-z,noexecstack \
--Wl,-z,separate-code"
+-Werror=format-security"
 
 export LDFLAGS_SECURITY="-Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -Wl,-z,separate-code -pie"
 

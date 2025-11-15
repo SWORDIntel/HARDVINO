@@ -137,10 +137,6 @@ export CFLAGS_NPU_MILITARY="$CFLAGS_OPTIMAL \
 # Merge with security hardening flags (from ImageHarden approach)
 export CFLAGS_NPU_HARDENED="$CFLAGS_NPU_MILITARY \
     $CFLAGS_SECURITY \
-    -D_FORTIFY_SOURCE=3 \
-    -fstack-protector-strong \
-    -fstack-clash-protection \
-    -fcf-protection=full \
     -fno-delete-null-pointer-checks \
     -fno-strict-overflow \
     -fwrapv"
