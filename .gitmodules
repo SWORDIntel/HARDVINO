@@ -52,3 +52,36 @@
 [submodule "submodules/intel-stack/tools/intel-ai-catalog"]
 	path = submodules/intel-stack/tools/intel-ai-catalog
 	url = https://github.com/intel/ai.git
+[submodule "submodules/intel-stack/tools/intel-extension-for-pytorch"]
+	path = submodules/intel-stack/tools/intel-extension-for-pytorch
+	url = https://github.com/intel/intel-extension-for-pytorch.git
+[submodule "submodules/intel-stack/toolchains/oneapi-libs/oneMKL"]
+	path = submodules/intel-stack/toolchains/oneapi-libs/oneMKL
+	url = https://github.com/uxlfoundation/oneMKL.git
+[submodule "submodules/intel-stack/toolchains/oneapi-libs/oneCCL"]
+	path = submodules/intel-stack/toolchains/oneapi-libs/oneCCL
+	url = https://github.com/uxlfoundation/oneCCL.git
+[submodule "submodules/intel-stack/runtimes/gpu-compute/level-zero"]
+	path = submodules/intel-stack/runtimes/gpu-compute/level-zero
+	url = https://github.com/oneapi-src/level-zero.git
+[submodule "submodules/intel-stack/runtimes/npu/intel-npu-acceleration-library"]
+	path = submodules/intel-stack/runtimes/npu/intel-npu-acceleration-library
+	url = https://github.com/intel/intel-npu-acceleration-library.git
+[submodule "submodules/intel-stack/runtimes/npu/linux-npu-driver"]
+	path = submodules/intel-stack/runtimes/npu/linux-npu-driver
+	url = https://github.com/intel/linux-npu-driver.git
+[submodule "submodules/intel-stack/tools/intel-extension-for-tensorflow"]
+	path = submodules/intel-stack/tools/intel-extension-for-tensorflow
+	url = https://github.com/intel/intel-extension-for-tensorflow.git
+[submodule "submodules/intel-stack/toolchains/oneapi-libs/oneDPL"]
+	path = submodules/intel-stack/toolchains/oneapi-libs/oneDPL
+	url = https://github.com/oneapi-src/oneDPL.git
+[submodule "submodules/intel-stack/toolchains/xetla"]
+	path = submodules/intel-stack/toolchains/xetla
+	url = https://github.com/intel/xetla.git
+[submodule "submodules/intel-stack/runtimes/gaudi/Model-References"]
+	path = submodules/intel-stack/runtimes/gaudi/Model-References
+	url = https://github.com/HabanaAI/Model-References.git
+[submodule "submodules/intel-stack/runtimes/gaudi/vllm-habana"]
+	path = submodules/intel-stack/runtimes/gaudi/vllm-habana
+	url = https://github.com/HabanaAI/vllm-fork.git
