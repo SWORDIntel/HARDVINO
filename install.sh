@@ -47,12 +47,15 @@ log_section() { echo -e "\n${CYAN}${BOLD}=== $1 ===${NC}\n"; }
 log_header()  { echo -e "\n${BLUE}${BOLD}$1${NC}"; }
 
 # ============================================================================
-# SOURCE ENVIRONMENT
+# SOURCE ENVIRONMENT AND BUILD ORDER
 # ============================================================================
 
 source_env() {
     if [ -f "${SCRIPT_DIR}/scripts/intel_env.sh" ]; then
         source "${SCRIPT_DIR}/scripts/intel_env.sh"
+    fi
+    if [ -f "${SCRIPT_DIR}/scripts/build_order.sh" ]; then
+        source "${SCRIPT_DIR}/scripts/build_order.sh"
     fi
 }
 
@@ -225,17 +228,33 @@ build_core() {
 }
 
 # ============================================================================
-# BUILD EXTENDED
+# BUILD EXTENDED (Staged Build)
 # ============================================================================
 
 build_extended() {
-    log_section "Building Extended Intel Stack"
+    log_section "Building Extended Intel Stack (Staged)"
     source_env
 
-    if [ -x "${SCRIPT_DIR}/scripts/build_intel_stack.sh" ]; then
+    export JOBS="${JOBS:-$(nproc)}"
+    export BUILD_DIR="${BUILD_DIR:-${HARDVINO_ROOT}/build}"
+    export INSTALL_DIR="${INSTALL_DIR:-${HARDVINO_ROOT}/install}"
+
+    mkdir -p "${BUILD_DIR}" "${INSTALL_DIR}"
+
+    # Run stages 4-8 (runtimes, media, qat, frameworks, tools)
+    # Stages 1-3 are handled by build_core via build_all.sh
+    if type -t stage4_runtimes &>/dev/null; then
+        log_info "Running staged builds (4-8)..."
+        stage4_runtimes || log_warn "Stage 4 (runtimes) had errors"
+        stage5_media || log_warn "Stage 5 (media) had errors"
+        stage6_qat || log_warn "Stage 6 (qat) had errors"
+        stage7_frameworks || log_warn "Stage 7 (frameworks) had errors"
+        stage8_tools || log_warn "Stage 8 (tools) had errors"
+    elif [ -x "${SCRIPT_DIR}/scripts/build_intel_stack.sh" ]; then
+        log_info "Fallback to build_intel_stack.sh..."
         "${SCRIPT_DIR}/scripts/build_intel_stack.sh" --all
     else
-        log_warn "build_intel_stack.sh not found, skipping extended build"
+        log_warn "No extended build system found"
     fi
 }
 
