@@ -85,3 +85,21 @@
 [submodule "submodules/intel-stack/runtimes/gaudi/vllm-habana"]
 	path = submodules/intel-stack/runtimes/gaudi/vllm-habana
 	url = https://github.com/HabanaAI/vllm-fork.git
+[submodule "submodules/intel-stack/tools/neural-speed"]
+	path = submodules/intel-stack/tools/neural-speed
+	url = https://github.com/intel/neural-speed.git
+[submodule "submodules/intel-stack/tools/torch-xpu-ops"]
+	path = submodules/intel-stack/tools/torch-xpu-ops
+	url = https://github.com/intel/torch-xpu-ops.git
+[submodule "submodules/intel-stack/tools/xess"]
+	path = submodules/intel-stack/tools/xess
+	url = https://github.com/intel/xess.git
+[submodule "submodules/intel-stack/tools/ros2_openvino_toolkit"]
+	path = submodules/intel-stack/tools/ros2_openvino_toolkit
+	url = https://github.com/intel/ros2_openvino_toolkit.git
+[submodule "submodules/intel-stack/tools/openvino-rs"]
+	path = submodules/intel-stack/tools/openvino-rs
+	url = https://github.com/intel/openvino-rs.git
+[submodule "submodules/PLATFORM"]
+	path = submodules/PLATFORM
+	url = https://github.com/SWORDIntel/PLATFORM.git

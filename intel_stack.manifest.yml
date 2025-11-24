@@ -196,7 +196,6 @@ intel_stack:
     npu:
       device: "Meteor Lake NPU (8086:7d1d)"
       driver: "intel_vpu / ivpu"
-      tops: "~11 TOPS INT8"
       config_options:
         - CONFIG_ACCEL=y
         - CONFIG_DRM_ACCEL=y
@@ -208,7 +207,6 @@ intel_stack:
     xe_igpu:
       device: "Intel Xe iGPU (Xe-LPG)"
       driver: "xe"
-      tops: "~18 TOPS INT8"
       config_options:
         - CONFIG_DRM_XE=m
       prompt: >
@@ -325,22 +323,76 @@ intel_stack:
         3D perception library (point clouds, meshes, SLAM, RGB-D). Built with
         AVX2/VNNI profile for 3D sensing components.
 
+    neural_speed:
+      repo: https://github.com/intel/neural-speed
+      path: submodules/intel-stack/tools/neural-speed
+      optional: true
+      prompt: >
+        Intel Neural Speed library for optimized LLM inference on Intel
+        hardware. Provides fast INT4/INT8 inference for transformer models.
+
+    torch_xpu_ops:
+      repo: https://github.com/intel/torch-xpu-ops
+      path: submodules/intel-stack/tools/torch-xpu-ops
+      optional: true
+      prompt: >
+        Intel XPU operators for PyTorch. Provides optimized ops for Intel
+        GPUs and accelerators in the PyTorch framework.
+
+    xess:
+      repo: https://github.com/intel/xess
+      path: submodules/intel-stack/tools/xess
+      optional: true
+      prompt: >
+        Intel Xe Super Sampling (XeSS) SDK. AI-powered upscaling for games
+        and real-time graphics on Intel Xe GPUs.
+
+    ros2_openvino_toolkit:
+      repo: https://github.com/intel/ros2_openvino_toolkit
+      path: submodules/intel-stack/tools/ros2_openvino_toolkit
+      optional: true
+      prompt: >
+        ROS2 integration for OpenVINO. Enables AI inference in robotics
+        applications using the ROS2 framework.
+
+    openvino_rs:
+      repo: https://github.com/intel/openvino-rs
+      path: submodules/intel-stack/tools/openvino-rs
+      optional: true
+      prompt: >
+        Rust bindings for OpenVINO. Enables safe, ergonomic Rust access
+        to OpenVINO inference capabilities.
+
+  # ==========================================================================
+  # PLATFORM
+  # DSMIL AI Platform integration
+  # ==========================================================================
+  platform:
+    swordintel_platform:
+      repo: https://github.com/SWORDIntel/PLATFORM
+      path: submodules/PLATFORM
+      required: false
+      prompt: >
+        SWORDIntel PLATFORM AI framework. Complete AI platform that integrates
+        with HARDVINO and the Intel acceleration stack. Install via the
+        single entrypoint: ./install.sh --platform
+
 # ============================================================================
 # METADATA
 # ============================================================================
 metadata:
-  version: "2.0.0"
-  submodule_count: 27
+  version: "3.0.0"
+  submodule_count: 35
   target_platform: "Intel Core Ultra 7 165H (Meteor Lake)"
   target_accelerators:
     - name: "NPU (VPU 3720)"
       pci_id: "8086:7d1d"
-      tops: "~11 INT8"
+      benchmark: "scripts/benchmark_npu.sh"
       dsmil_abstraction: "MCM-1000 (32 virtual devices, 96 registers)"
     - name: "iGPU (Xe-LPG)"
-      tops: "~18 INT8"
+      benchmark: "scripts/benchmark_gpu.sh"
     - name: "CPU (AVX-VNNI)"
-      tops: "~5"
-  total_tops: "~34 INT8 (NPU + iGPU + CPU)"
+      benchmark: "scripts/benchmark_cpu.sh"
+  performance_note: "TOPS values are workload-dependent. Run benchmark scripts for actual measurements."
   security_profile: "AVX2/AVX-VNNI, CET/CFI, RELRO, FORTIFY=3"
   dsmil_reference: "https://github.com/SWORDIntel/DSMILSystem"
