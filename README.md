@@ -1,535 +1,355 @@
 # HARDVINO
 
-**Hardened OpenVINO/OneAPI Build System for Intel Meteor Lake with NPU VPU 3720 Support**
+**Intel Acceleration Stack for DSMIL - Supersedes OpenVINO**
 
-HARDVINO is a comprehensive, security-hardened build system for OpenVINO and OneAPI libraries, specifically optimized for the Intel Core Ultra 7 165H (Meteor Lake) with military-grade NPU support. This repository is designed to be integrated as a submodule into kernel compilation suites, providing hardened AI inference capabilities directly in kernel space.
+HARDVINO is a hardened, security-first build of the complete Intel AI compute stack, optimized for Intel Core Ultra 7 165H (Meteor Lake) with NPU VPU 3720 support. It provides a single entrypoint for building 35 Intel components with military-grade security hardening.
 
-## 🎯 AVX2-First Architecture
+---
 
-**IMPORTANT**: HARDVINO uses an **AVX2-first workflow** optimized for Meteor Lake processors.
+## Key Features
 
-- ✅ **Optimized for**: AVX2 + AVX-VNNI (AI/ML acceleration)
-- ❌ **NOT using**: AVX-512 (not supported on Meteor Lake hardware)
-- ⚡ **Performance**: Optimal power efficiency and thermal characteristics
-- 📚 **Documentation**: See `AVX2_FIRST_WORKFLOW.md` for complete details
+- **Supersedes OpenVINO**: HARDVINO replaces upstream OpenVINO with hardened builds
+- **Single Entrypoint**: `./install.sh --all` builds the complete Intel AI stack
+- **35 Submodules**: Complete Intel ecosystem (oneAPI, GPU, NPU, QAT, ML frameworks)
+- **Meteor Lake Optimized**: AVX2/AVX-VNNI tuning for Core Ultra 7 165H
+- **Security Hardened**: CET/CFI, RELRO, FORTIFY=3, stack protection
+- **DSMIL Integration**: Ready for submodule import into DSMIL framework
+- **MCM-1000 NPU Abstraction**: 32 virtual NPU devices with 96 registers
 
-### Why AVX2-First?
-
-Intel Meteor Lake (Core Ultra 7 165H) provides **AVX-VNNI** on AVX2 width, delivering:
-- INT8 VNNI operations for neural network acceleration
-- Better sustained performance (no thermal throttling)
-- Lower power consumption vs hypothetical AVX-512
-- Optimal for 6P+10E hybrid architecture
-
-**Quick Start**: The default configuration is already optimal - no changes needed!
-
-## Features
-
-### Security Hardening (ImageHarden-Inspired)
-
-- **Compile-Time Hardening**
-  - `_FORTIFY_SOURCE=3` - Advanced buffer overflow detection
-  - Stack protectors (strong + clash protection)
-  - Control-Flow Integrity (CFI) with CET - Spectre/Meltdown mitigation
-  - Full RELRO + PIE
-  - Position Independent Code (PIC)
-
-- **Runtime Hardening**
-  - Kernel-space sandboxing ready
-  - Secure NPU device access
-  - DMA isolation
-  - Firmware validation
-
-### Performance Optimization (AVX2-First)
-
-- **Meteor Lake Specific**
-  - Native `-march=meteorlake` tuning
-  - Hybrid core awareness (6P + 10E)
-  - **AVX2 + AVX-VNNI** optimizations (primary SIMD path)
-  - AES-NI, SHA, GFNI cryptographic acceleration
-  - BMI, BMI2 bit manipulation
-  - Link-Time Optimization (LTO)
-  - **AVX-512 explicitly disabled** (not supported on Meteor Lake)
-
-- **NPU VPU 3720 Military Mode**
-  - 1.85 GHz turbo frequency
-  - 2 Neural Compute Engines
-  - 4MB CMX memory optimization
-  - 68 GB/s DDR bandwidth
-  - 4 DPU groups, 4 DMA engines
-  - INT4/FP8 quantization support
-  - Batch size override: 256
-  - Async inference queue: 64
-
-### Components
-
-- **OpenVINO** - AI inference framework with NPU support
-- **oneTBB** - Threading Building Blocks
-- **oneDNN** - Deep Neural Network Library
-- **Level-Zero** - Low-level GPU/NPU interface (optional)
-
-## System Requirements
-
-### Hardware
-- Intel Core Ultra 7 165H (Meteor Lake) or compatible
-- NPU VPU 3720 (Intel AI Boost)
-- Minimum 16GB RAM
-- 50GB free disk space for build
-
-### Software
-- Debian-based Linux (Ubuntu 22.04+ recommended)
-- Kernel 6.2+ (for NPU support)
-- GCC 13+ or Clang 14+ (GCC 15 recommended, auto-installed if missing)
-- CMake 3.20+
-- Python 3.8+
-- Git
-
-### Build Dependencies
-```bash
-sudo apt-get update
-sudo apt-get install -y \
-    build-essential \
-    git \
-    cmake \
-    ninja-build \
-    python3 \
-    python3-pip \
-    python3-dev \
-    pkg-config \
-    autoconf \
-    automake \
-    libtool \
-    libssl-dev \
-    libusb-1.0-0-dev \
-    checksec
-```
-
-**Note:** GCC 15 will be automatically installed during the build if not already present. Alternatively, you can pre-install:
-```bash
-sudo apt-get install -y gcc-15 g++-15 gcc-ar-15 gcc-nm-15 gcc-ranlib-15
-```
+---
 
 ## Quick Start
 
-### Standalone Build
+### Standalone Installation
 
 ```bash
-# Clone the repository
 git clone https://github.com/SWORDIntel/HARDVINO.git
 cd HARDVINO
-
-# Initialize submodules
-git submodule update --init --recursive
-
-# Build everything
-./build_all.sh
-
-# Set up environment
-source install/setupvars.sh
-
-# Initialize NPU
-init_npu_tactical
-
-# Test NPU
-test_npu_military
+./install.sh --init --deps --all
+source install/setup_hardvino.sh
 ```
 
-### As Kernel Submodule
+### As DSMIL Submodule
 
 ```bash
-# In your kernel source directory
+# In your DSMIL project root
 git submodule add https://github.com/SWORDIntel/HARDVINO.git hardvino
 cd hardvino
-git submodule update --init --recursive
-
-# Build HARDVINO
-./build_all.sh
-
-# Integrate with kernel build
-export HARDVINO_ROOT=$(pwd)
-# See KERNEL_INTEGRATION.md for detailed instructions
+./install.sh --init --deps --all
 ```
 
-## Build System
+---
 
-### Master Build Script
-
-`./build_all.sh` - Builds complete HARDVINO suite
-
-**Options:**
-- `--clean` - Clean build (remove existing build directories)
-- `--skip-oneapi` - Skip OneAPI build
-- `--skip-openvino` - Skip OpenVINO build
-- `--skip-kernel` - Skip kernel integration setup
-- `--verbose` - Verbose output
-
-**Examples:**
-```bash
-./build_all.sh                # Build everything
-./build_all.sh --clean        # Clean build
-./build_all.sh --skip-oneapi  # Build only OpenVINO
-```
-
-### Individual Build Scripts
-
-- `build_hardened_oneapi.sh` - Build oneTBB and oneDNN
-- `build_hardened_openvino.sh` - Build OpenVINO with NPU support
-- `kernel_integration.sh` - Set up kernel integration files
-
-### Configuration Scripts
-
-- `npu_military_config.sh` - NPU tactical configuration
-- `meteor_lake_flags_ultimate/` - Complete compiler optimization flags
-
-## NPU Configuration
-
-### Tactical Mode Initialization
+## Single Entrypoint: `install.sh`
 
 ```bash
-# Source environment
-source install/setupvars.sh
+./install.sh [options]
 
-# Initialize NPU in tactical mode
-init_npu_tactical
-
-# Output:
-# 🔴 INITIALIZING NPU TACTICAL MODE...
-# ✓ NPU WEAPONIZED
+Options:
+  --init          Initialize all 35 submodules (shallow clone)
+  --deps          Install system dependencies
+  --core          Build core components (HARDVINO, oneDNN, oneTBB)
+  --extended      Build extended stack (GPU, media, QAT, tools)
+  --platform      Install PLATFORM AI framework
+  --all           Build everything (core + extended + platform)
+  --clean         Clean build directories before building
+  --jobs N        Parallel jobs (default: nproc)
+  --help          Show help
 ```
 
-### NPU Testing
+### Build Stages
+
+The build system uses a 9-stage dependency-resolved architecture:
+
+| Stage | Components | Dependencies |
+|-------|------------|--------------|
+| 1 | Toolchains (xetla) | None |
+| 2 | oneAPI (TBB, DNN, MKL, DAL, CCL, DPL) | Stage 1 |
+| 3 | **HARDVINO Core** (supersedes OpenVINO) | Stage 2 |
+| 4 | Runtimes (GPU, NPU, Level Zero) | Stage 3 |
+| 5 | Media (VAAPI drivers) | Stage 4 |
+| 6 | QAT (crypto, compression) | None |
+| 7 | ML Frameworks (PyTorch, TF, HuggingFace) | Stage 3-4 |
+| 8 | Tools (Open3D, XeSS, ROS2, Containers) | Stage 7 |
+| 9 | **PLATFORM** | All |
+
+---
+
+## CMake Integration
+
+### Method 1: Include Config
+
+```cmake
+include(hardvino/cmake/HARDVINOConfig.cmake)
+
+add_executable(my_inference main.cpp)
+target_link_hardvino(my_inference)
+```
+
+### Method 2: Find Package
+
+```cmake
+set(CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/hardvino/install" ${CMAKE_PREFIX_PATH})
+
+find_package(OpenVINO REQUIRED)
+find_package(TBB REQUIRED)
+find_package(dnnl REQUIRED)
+
+target_link_libraries(my_app
+    openvino::runtime
+    TBB::tbb
+    DNNL::dnnl
+)
+```
+
+---
+
+## Environment Setup
 
 ```bash
-# Test NPU with OpenVINO
-test_npu_military
+# Source the unified setup
+source hardvino/install/setup_hardvino.sh
 
-# Expected output:
-# 🎯 NPU ONLINE - VPU 3720 READY FOR COMBAT
-# 🔫 NPU DESIGNATION: Intel(R) AI Boost
-# 🚀 NPU INFERENCE ENGINE: ARMED
-# ⚡ NEURAL COMPUTE ENGINES: 2x ACTIVE
-# 💾 CMX MEMORY: 4MB ALLOCATED
-# 🎖️ TACTICAL MODE: ENGAGED
+# Or source individual components
+source hardvino/scripts/intel_env.sh   # Compiler flags
 ```
 
-### NPU Benchmarking
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `HARDVINO_ROOT` | HARDVINO installation root |
+| `CFLAGS_OPTIMAL` | Meteor Lake optimized C flags |
+| `LDFLAGS_OPTIMAL` | Optimized linker flags |
+| `KCFLAGS` | Kernel compilation flags |
+| `RUSTFLAGS` | Rust compilation flags |
+| `OV_NPU_*` | OpenVINO NPU configuration |
+
+---
+
+## Target Hardware
+
+### Intel Core Ultra 7 165H (Meteor Lake)
+
+| Accelerator | Description | Driver |
+|-------------|-------------|--------|
+| **NPU** | VPU 3720 (Intel AI Boost) | `intel_vpu` |
+| **iGPU** | Xe-LPG integrated graphics | `xe` |
+| **CPU** | AVX2, AVX-VNNI | - |
+| **QAT** | Crypto/compression offload | `qat_*` |
+
+### MCM-1000 DSMIL NPU Abstraction
+
+HARDVINO supports the MCM-1000 DSMIL driver abstraction:
+
+```yaml
+mcm_1000:
+  device: "MCM-1000 (DSMIL NPU Abstraction)"
+  driver: "dsmil_mcm / intel_vpu"
+  hardware: "Intel Meteor Lake NPU (VPU 3720)"
+  virtual_devices: 32
+  device_range: "31-62"
+  tokens_per_device: 3
+  total_registers: 96
+```
+
+---
+
+## Security Hardening
+
+HARDVINO builds with comprehensive security hardening:
 
 ```bash
-# Display NPU benchmark info
-benchmark_npu_military
-```
-
-## Kernel Integration
-
-HARDVINO is designed to be integrated into kernel compilation suites. See [KERNEL_INTEGRATION.md](KERNEL_INTEGRATION.md) for comprehensive guide.
-
-### Quick Integration
-
-```makefile
-# In your kernel Makefile
-HARDVINO_ROOT := $(srctree)/hardvino
-export HARDVINO_ROOT
-
-include $(HARDVINO_ROOT)/Kbuild.mk
-
-KBUILD_CFLAGS += $(HARDVINO_KCFLAGS)
-```
-
-### Example Kernel Module
-
-See `example_module/` for a complete example of using HARDVINO in kernel space.
-
-```bash
-cd example_module
-make
-sudo insmod hardvino_example.ko
-dmesg | tail
-```
-
-## Security Features
-
-### Compile-Time Hardening Flags
-
-Based on ImageHarden security principles:
-
-```bash
-# Complete hardening flags
+# Compiler flags
 -D_FORTIFY_SOURCE=3
 -fstack-protector-strong
 -fstack-clash-protection
 -fcf-protection=full
--fPIE -pie
+
+# Linker flags
 -Wl,-z,relro,-z,now
 -Wl,-z,noexecstack
 -Wl,-z,separate-code
 ```
 
-### Binary Verification
+### Verify Hardening
 
 ```bash
-# Check security hardening in built libraries
 checksec --file=install/openvino/lib/libopenvino.so
-
-# Expected output:
-# RELRO:    FULL RELRO
-# Stack:    Canary found
-# NX:       NX enabled
-# PIE:      PIE enabled
-# FORTIFY:  Enabled
+# Expected: FULL RELRO, Canary, NX, PIE, FORTIFY enabled
 ```
 
-### NPU Security
+---
 
-- Firmware path validation
-- Secure DMA access
-- CMX memory isolation
-- Kernel bypass prevention (controlled)
-- Device permission management
+## Component Summary (35 Submodules)
 
-## Architecture Optimization
+### Core (3)
+- **HARDVINO** - Hardened OpenVINO (supersedes upstream)
+- **oneTBB** - Threading Building Blocks
+- **oneDNN** - Deep Neural Network Library
+- **NUC2.1** - Movidius VPU support
 
-### Meteor Lake Features
+### oneAPI Libraries (5)
+- oneMKL, oneDAL, oneCCL, oneDPL, xetla
+
+### GPU/NPU Runtimes (7)
+- compute-runtime, intel-graphics-compiler, level-zero
+- linux-npu-driver, intel-npu-acceleration-library
+- Model-References (Gaudi), vllm-habana
+
+### Media & QAT (5)
+- media-driver, intel-vaapi-driver
+- qatlib, QAT_Engine, QAT-ZSTD-Plugin
+
+### ML Frameworks & Tools (14)
+- intel-extension-for-pytorch, intel-extension-for-tensorflow
+- torch-xpu-ops, neural-speed, neural-compressor, optimum-intel
+- Open3D, XeSS, ros2_openvino_toolkit, openvino-rs
+- PerfSpect, intel-ai-catalog, openvino_contrib, ai-containers
+
+### Platform (1)
+- **PLATFORM** - SWORDIntel AI Platform
+
+---
+
+## Kernel Configuration
+
+Required kernel options for full accelerator support:
+
+```text
+# NPU
+CONFIG_ACCEL=y
+CONFIG_DRM_ACCEL=y
+CONFIG_DRM_ACCEL_IVPU=m
+
+# iGPU
+CONFIG_DRM_XE=m
+
+# QAT
+CONFIG_CRYPTO_DEV_QAT=m
+
+# Security
+CONFIG_LSM="lockdown,yama,bpf,apparmor"
+CONFIG_BPF_LSM=y
+```
+
+See [docs/KERNEL_CONFIG.md](docs/KERNEL_CONFIG.md) for complete configuration.
+
+---
+
+## Directory Structure
+
+```
+HARDVINO/
+├── install.sh                     # Single entrypoint
+├── intel_stack.manifest.yml       # Component manifest (v3.2.0)
+├── oneapi-tbb/                    # Threading
+├── oneapi-dnn/                    # DNN kernels
+├── NUC2.1/                        # Movidius VPU
+├── submodules/
+│   ├── PLATFORM/                  # AI Platform
+│   └── intel-stack/
+│       ├── runtimes/              # GPU, NPU, media, QAT
+│       ├── toolchains/            # oneAPI libs
+│       └── tools/                 # PyTorch, TF, etc.
+├── scripts/
+│   ├── intel_env.sh               # Compiler flags
+│   ├── build_order.sh             # Build stages
+│   └── integrate.sh               # Integration helper
+├── cmake/
+│   └── HARDVINOConfig.cmake       # CMake config
+├── docs/
+│   ├── INDEX.md                   # Documentation index
+│   ├── MASTER_PROMPT.md           # AI system prompt
+│   ├── KERNEL_CONFIG.md           # Kernel flags
+│   ├── DSMIL_INTEGRATION.md       # DSMIL guide
+│   └── avx2/                      # AVX2 optimization docs
+└── install/                       # Built artifacts
+    └── setup_hardvino.sh          # Environment setup
+```
+
+---
+
+## Verification
+
+### Check Installation
 
 ```bash
-# Architecture flags
--march=meteorlake -mtune=meteorlake
-
-# Or fallback
--march=alderlake -mtune=alderlake
-
-# Or native detection
--march=native -mtune=native
+./scripts/integrate.sh --check
 ```
 
-### Instruction Set Extensions (AVX2-First)
-
-- **SSE/AVX**: SSE4.2, AVX, AVX2, FMA, F16C
-- **AI/ML**: **AVX-VNNI** (Vector Neural Network Instructions) ⭐ Primary ML acceleration
-- **Cryptographic**: AES, VAES, PCLMUL, VPCLMULQDQ, SHA, GFNI
-- **Bit Manipulation**: BMI, BMI2, LZCNT, POPCNT
-- **Memory**: MOVBE, MOVDIRI, MOVDIR64B, CLFLUSHOPT, CLWB, CLDEMOTE
-- **Advanced**: ADX, RDRND, RDSEED, FSGSBASE, XSAVE family
-- **Control Flow**: WAITPKG, UINTR, SERIALIZE, TSXLDTRK
-- **Security**: CET, SHSTK (Control-flow Enforcement Technology)
-- **NOT SUPPORTED**: AVX-512F, AVX-512BW, AVX-512DQ (not available on Meteor Lake)
-
-## Performance Tuning
-
-### P-Core Affinity (6 Performance Cores)
+### Test NPU
 
 ```bash
-export GOMP_CPU_AFFINITY="0-5"
-export OMP_NUM_THREADS="6"
-export OMP_PROC_BIND="true"
-export OMP_PLACES="cores"
+source install/setup_hardvino.sh
+python3 -c "from openvino.runtime import Core; print(Core().available_devices)"
 ```
 
-### NPU Power Mode
+### Benchmark
 
 ```bash
-export OV_NPU_POWER_MODE=MAXIMUM_PERFORMANCE
-export OV_NPU_PERFORMANCE_HINT=LATENCY
-export OV_NPU_THERMAL_THROTTLE_LEVEL=DISABLED
-export OV_NPU_TURBO_MODE=ENABLED
+# NPU benchmark
+./scripts/benchmark_npu.sh
+
+# GPU benchmark
+./scripts/benchmark_gpu.sh
 ```
 
-### Memory Optimization
-
-```bash
-export MALLOC_ARENA_MAX="4"
-export MALLOC_MMAP_THRESHOLD_="131072"
-export OV_NPU_MEMORY_POOL_SIZE=2048MB
-```
-
-## Environment Variables
-
-### Compiler Flags (Auto-configured)
-
-- `CFLAGS_OPTIMAL` - Optimal C flags
-- `CXXFLAGS_OPTIMAL` - Optimal C++ flags
-- `LDFLAGS_OPTIMAL` - Optimal linker flags
-- `CFLAGS_NPU_HARDENED` - NPU + hardening flags
-- `KCFLAGS` - Kernel compilation flags
-
-### OpenVINO NPU Runtime
-
-- `OV_NPU_COMPILER_TYPE=DRIVER`
-- `OV_NPU_PLATFORM=3720`
-- `OV_NPU_DEVICE_ID=0x7D1D`
-- `OV_NPU_MAX_TILES=2`
-- `OV_NPU_DPU_GROUPS=4`
-- `OV_NPU_DMA_ENGINES=4`
-
-### Build System
-
-- `HARDVINO_ROOT` - HARDVINO installation path
-- `OPENVINO_INSTALL_DIR` - OpenVINO installation
-- `TBB_DIR` - oneTBB directory
-- `DNNL_DIR` - oneDNN directory
+---
 
 ## Troubleshooting
 
-### NPU Not Detected
+### NPU Not Found
 
 ```bash
-# Check NPU device
+# Check device
 ls -la /dev/accel/accel0
 
-# Load NPU module
+# Load driver
 sudo modprobe intel_vpu
 
-# Check module loaded
-lsmod | grep intel_vpu
-
 # Check firmware
-ls -la /lib/firmware/intel/vpu/vpu_3720.bin
+ls /lib/firmware/intel/vpu/
 ```
 
 ### Build Failures
 
 ```bash
 # Clean rebuild
-./build_all.sh --clean
-
-# Verify submodules
-git submodule status
-git submodule update --init --recursive
+./install.sh --clean --init --all
 
 # Check dependencies
-gcc --version  # Should be 11+
-cmake --version  # Should be 3.20+
+./install.sh --deps
 ```
-
-### Permission Issues
-
-```bash
-# NPU device permissions
-sudo chmod 666 /dev/accel/accel0
-sudo chown $USER:render /dev/accel/accel0
-
-# Or add user to render group
-sudo usermod -a -G render $USER
-```
-
-## Directory Structure
-
-```
-HARDVINO/
-├── build/                          # Build artifacts (generated)
-├── install/                        # Installation directory (generated)
-│   ├── openvino/                  # OpenVINO installation
-│   ├── oneapi-tbb/                # oneTBB installation
-│   ├── oneapi-dnn/                # oneDNN installation
-│   └── setupvars.sh               # Environment setup script
-├── openvino/                      # OpenVINO submodule
-├── oneapi-tbb/                    # oneTBB submodule
-├── oneapi-dnn/                    # oneDNN submodule
-├── meteor_lake_flags_ultimate/    # Compiler optimization flags (AVX2-first)
-├── example_module/                # Example kernel module (generated)
-├── build_all.sh                   # Master build script
-├── build_hardened_openvino.sh     # OpenVINO build script (AVX2-first)
-├── build_hardened_oneapi.sh       # OneAPI build script (AVX2-first)
-├── kernel_integration.sh          # Kernel integration setup
-├── npu_military_config.sh         # NPU configuration
-├── AVX2_FIRST_WORKFLOW.md         # ⭐ AVX2-first architecture guide
-├── AVX2_OPTIMIZATION_QUICK_GUIDE.md  # ⭐ Quick optimization reference
-├── kernel_config.mk               # Kernel build config (generated)
-├── Kbuild.mk                      # Kernel Makefile integration (generated)
-├── KERNEL_INTEGRATION.md          # Kernel integration guide (generated)
-└── README.md                      # This file
-```
-
-## Use Cases
-
-### 1. AI-Accelerated Kernel Module
-
-Build kernel modules that leverage OpenVINO inference with NPU acceleration:
-
-```c
-#include <linux/module.h>
-#include <openvino/c/openvino.h>
-
-// AI inference in kernel space
-```
-
-### 2. Hardened AI Inference
-
-Run AI models with military-grade security hardening:
-
-```python
-import openvino as ov
-core = ov.Core()
-# Hardened inference with NPU
-```
-
-### 3. Embedded Kernel AI
-
-Integrate HARDVINO into custom embedded kernels for edge AI:
-
-```bash
-# In custom kernel build
-export HARDVINO_ROOT=/path/to/hardvino
-make -j$(nproc) KCFLAGS="$(HARDVINO_KCFLAGS)"
-```
-
-## Performance Characteristics
-
-### NPU VPU 3720 Specifications
-
-- **Frequency**: 1.85 GHz (Turbo)
-- **Compute Engines**: 2 Neural Compute Engines
-- **SHAVE Processors**: 8
-- **CMX Memory**: 4MB
-- **L2 Cache**: 2.5MB
-- **DDR Bandwidth**: 68 GB/s
-- **Supported Operations**:
-  - INT4, INT8, FP16, FP8 (experimental)
-  - Convolution, Pooling, Activation
-  - Batch normalization, Element-wise ops
-  - Multi-stream: 16 concurrent
-
-### Build Times (6P+10E Cores)
-
-- oneTBB: ~5 minutes
-- oneDNN: ~10 minutes
-- OpenVINO: ~45-60 minutes (full build)
-- Total: ~1 hour (clean build)
-
-## License
-
-This build system follows the licenses of its components:
-- OpenVINO: Apache 2.0
-- oneTBB: Apache 2.0
-- oneDNN: Apache 2.0
-
-Build scripts and configuration: MIT License
-
-## References
-
-- [OpenVINO Documentation](https://docs.openvino.ai/)
-- [Intel NPU Acceleration Library](https://intel.github.io/intel-npu-acceleration-library/)
-- [oneAPI Documentation](https://www.intel.com/content/www/us/en/developer/tools/oneapi/overview.html)
-- [Intel Meteor Lake Architecture](https://www.intel.com/content/www/us/en/products/docs/processors/core-ultra/meteor-lake-architecture-overview.html)
-- [ImageHarden Security Principles](https://github.com/yourusername/ImageHarden)
-
-## Support & Contributing
-
-For issues, questions, or contributions:
-- GitHub Issues: https://github.com/SWORDIntel/HARDVINO/issues
-- Pull Requests welcome
-
-## Security Disclosure
-
-For security vulnerabilities, please contact privately before public disclosure.
-
-## Acknowledgments
-
-- Based on ImageHarden security hardening principles
-- Intel OpenVINO team for NPU support
-- Meteor Lake optimization research by KYBERLOCK Tactical Computing Division
 
 ---
 
-**HARDVINO** - Hardened AI inference for mission-critical applications.
+## Documentation
 
-Built with military-grade security for Intel Meteor Lake NPU VPU 3720.
+See [docs/INDEX.md](docs/INDEX.md) for the complete documentation index.
+
+| Document | Description |
+|----------|-------------|
+| [DSMIL_INTEGRATION.md](docs/DSMIL_INTEGRATION.md) | DSMIL framework integration |
+| [MASTER_PROMPT.md](docs/MASTER_PROMPT.md) | AI system prompt |
+| [KERNEL_CONFIG.md](docs/KERNEL_CONFIG.md) | Kernel configuration |
+| [avx2/](docs/avx2/) | AVX2-first optimization guides |
+
+---
+
+## Support
+
+- GitHub: https://github.com/SWORDIntel/HARDVINO
+- DSMIL: https://github.com/SWORDIntel/DSMILSystem
+- PLATFORM: https://github.com/SWORDIntel/PLATFORM
+
+---
+
+## License
+
+Components follow their respective licenses (Apache 2.0 for OpenVINO, oneTBB, oneDNN).
+Build scripts and configuration: MIT License.
+
+---
+
+**HARDVINO** - Hardened Intel AI stack for mission-critical applications.

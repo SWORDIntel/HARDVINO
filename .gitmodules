@@ -100,3 +100,6 @@
 [submodule "submodules/PLATFORM"]
 	path = submodules/PLATFORM
 	url = https://github.com/SWORDIntel/PLATFORM.git
+[submodule "submodules/intel-stack/tools/ai-containers"]
+	path = submodules/intel-stack/tools/ai-containers
+	url = https://github.com/intel/ai-containers.git
