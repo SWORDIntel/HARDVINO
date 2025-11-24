@@ -10,3 +10,45 @@
 [submodule "NUC2.1"]
 	path = NUC2.1
 	url = https://github.com/SWORDIntel/NUC2.1
+[submodule "submodules/intel-stack/runtimes/gpu-compute/compute-runtime"]
+	path = submodules/intel-stack/runtimes/gpu-compute/compute-runtime
+	url = https://github.com/intel/compute-runtime.git
+[submodule "submodules/intel-stack/runtimes/gpu-compute/intel-graphics-compiler"]
+	path = submodules/intel-stack/runtimes/gpu-compute/intel-graphics-compiler
+	url = https://github.com/intel/intel-graphics-compiler.git
+[submodule "submodules/intel-stack/runtimes/media/media-driver"]
+	path = submodules/intel-stack/runtimes/media/media-driver
+	url = https://github.com/intel/media-driver.git
+[submodule "submodules/intel-stack/runtimes/media/intel-vaapi-driver"]
+	path = submodules/intel-stack/runtimes/media/intel-vaapi-driver
+	url = https://github.com/intel/intel-vaapi-driver.git
+[submodule "submodules/intel-stack/runtimes/qat/qatlib"]
+	path = submodules/intel-stack/runtimes/qat/qatlib
+	url = https://github.com/intel/qatlib.git
+[submodule "submodules/intel-stack/runtimes/qat/QAT_Engine"]
+	path = submodules/intel-stack/runtimes/qat/QAT_Engine
+	url = https://github.com/intel/QAT_Engine.git
+[submodule "submodules/intel-stack/runtimes/qat/QAT-ZSTD-Plugin"]
+	path = submodules/intel-stack/runtimes/qat/QAT-ZSTD-Plugin
+	url = https://github.com/intel/QAT-ZSTD-Plugin.git
+[submodule "submodules/intel-stack/runtimes/openvino/openvino_contrib"]
+	path = submodules/intel-stack/runtimes/openvino/openvino_contrib
+	url = https://github.com/openvinotoolkit/openvino_contrib.git
+[submodule "submodules/intel-stack/toolchains/oneapi-libs/oneDAL"]
+	path = submodules/intel-stack/toolchains/oneapi-libs/oneDAL
+	url = https://github.com/uxlfoundation/oneDAL.git
+[submodule "submodules/intel-stack/tools/PerfSpect"]
+	path = submodules/intel-stack/tools/PerfSpect
+	url = https://github.com/intel/PerfSpect.git
+[submodule "submodules/intel-stack/tools/neural-compressor"]
+	path = submodules/intel-stack/tools/neural-compressor
+	url = https://github.com/intel/neural-compressor.git
+[submodule "submodules/intel-stack/tools/optimum-intel"]
+	path = submodules/intel-stack/tools/optimum-intel
+	url = https://github.com/huggingface/optimum-intel.git
+[submodule "submodules/intel-stack/tools/Open3D"]
+	path = submodules/intel-stack/tools/Open3D
+	url = https://github.com/isl-org/Open3D.git
+[submodule "submodules/intel-stack/tools/intel-ai-catalog"]
+	path = submodules/intel-stack/tools/intel-ai-catalog
+	url = https://github.com/intel/ai.git
