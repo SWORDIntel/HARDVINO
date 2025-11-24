@@ -1,10 +1,135 @@
 # HARDVINO
 
-**Intel Acceleration Stack for DSMIL - Supersedes OpenVINO**
+**Hardened OpenVINO/OneAPI Build System for Intel Meteor Lake with NPU VPU 3720 Support + Multi-Vendor AI Stack**
 
 HARDVINO is a hardened, security-first build of the complete Intel AI compute stack, optimized for Intel Core Ultra 7 165H (Meteor Lake) with NPU VPU 3720 support. It provides a single entrypoint for building 35 Intel components with military-grade security hardening.
 
----
+**Multi-Vendor Support**: HARDVINO now supports both Qualcomm AI Engine Direct (QNN SDK) and NVIDIA open-gpu-kernel-modules for heterogeneous AI deployments combining Intel + Qualcomm + NVIDIA accelerators. See [QNN_INTEGRATION.md](docs/QNN_INTEGRATION.md) and [NVIDIA_INTEGRATION.md](docs/NVIDIA_INTEGRATION.md) for details.
+
+## 🎯 AVX2-First Architecture
+
+**IMPORTANT**: HARDVINO uses an **AVX2-first workflow** optimized for Meteor Lake processors.
+
+- ✅ **Optimized for**: AVX2 + AVX-VNNI (AI/ML acceleration)
+- ❌ **NOT using**: AVX-512 (not supported on Meteor Lake hardware)
+- ⚡ **Performance**: Optimal power efficiency and thermal characteristics
+- 📚 **Documentation**: See `AVX2_FIRST_WORKFLOW.md` for complete details
+
+### Why AVX2-First?
+
+Intel Meteor Lake (Core Ultra 7 165H) provides **AVX-VNNI** on AVX2 width, delivering:
+- INT8 VNNI operations for neural network acceleration
+- Better sustained performance (no thermal throttling)
+- Lower power consumption vs hypothetical AVX-512
+- Optimal for 6P+10E hybrid architecture
+
+**Quick Start**: The default configuration is already optimal - no changes needed!
+
+## Features
+
+### Security Hardening (ImageHarden-Inspired)
+
+- **Compile-Time Hardening**
+  - `_FORTIFY_SOURCE=3` - Advanced buffer overflow detection
+  - Stack protectors (strong + clash protection)
+  - Control-Flow Integrity (CFI) with CET - Spectre/Meltdown mitigation
+  - Full RELRO + PIE
+  - Position Independent Code (PIC)
+
+- **Runtime Hardening**
+  - Kernel-space sandboxing ready
+  - Secure NPU device access
+  - DMA isolation
+  - Firmware validation
+
+### Performance Optimization (AVX2-First)
+
+- **Meteor Lake Specific**
+  - Native `-march=meteorlake` tuning
+  - Hybrid core awareness (6P + 10E)
+  - **AVX2 + AVX-VNNI** optimizations (primary SIMD path)
+  - AES-NI, SHA, GFNI cryptographic acceleration
+  - BMI, BMI2 bit manipulation
+  - Link-Time Optimization (LTO)
+  - **AVX-512 explicitly disabled** (not supported on Meteor Lake)
+
+- **NPU VPU 3720 Military Mode**
+  - 1.85 GHz turbo frequency
+  - 2 Neural Compute Engines
+  - 4MB CMX memory optimization
+  - 68 GB/s DDR bandwidth
+  - 4 DPU groups, 4 DMA engines
+  - INT4/FP8 quantization support
+  - Batch size override: 256
+  - Async inference queue: 64
+
+### Components
+
+#### Intel AI Stack (Core)
+
+- **OpenVINO** - AI inference framework with NPU support
+- **oneTBB** - Threading Building Blocks
+- **oneDNN** - Deep Neural Network Library
+- **Level-Zero** - Low-level GPU/NPU interface (optional)
+
+#### Multi-Vendor AI Stack (Optional)
+
+- **Qualcomm QNN SDK** - AI Engine Direct for Qualcomm NPUs, Hexagon DSPs, and Cloud AI 100 accelerators
+  - **Installation**: Manual (closed-source, requires Qualcomm Developer Portal access)
+  - **Documentation**: [docs/QNN_INTEGRATION.md](docs/QNN_INTEGRATION.md)
+  - **Security**: Hardened installation with systemd confinement and service account isolation
+  - **Use Cases**: Multi-vendor inference, Snapdragon edge devices, Cloud AI 100 accelerators
+
+- **NVIDIA GPU Modules** - Open-source kernel drivers for NVIDIA GPUs (Turing and newer)
+  - **Installation**: Git submodule (open-source, built with HARDVINO hardening)
+  - **Documentation**: [docs/NVIDIA_INTEGRATION.md](docs/NVIDIA_INTEGRATION.md)
+  - **Security**: CET/CFI, FORTIFY=3, module signing for Secure Boot, IOMMU isolation
+  - **Use Cases**: CUDA ML training, GPU compute, hybrid rendering, heterogeneous AI
+
+## Multi-Vendor AI Support
+
+HARDVINO supports heterogeneous AI deployments combining Intel, Qualcomm, and NVIDIA accelerators:
+
+- **Intel NPU (VPU 3720)** - Primary on-die accelerator for Meteor Lake
+- **Intel iGPU (Xe-LPG)** - Integrated graphics for compute workloads
+- **Qualcomm QNN** - Optional external SDK for Qualcomm AI hardware
+- **NVIDIA GPU** - Optional CUDA-capable GPUs (RTX 20/30/40 series, A100, H100, etc.)
+
+**Setup**:
+```bash
+# 1. Build Intel stack (standard)
+./build_all.sh
+
+# 2. Build NVIDIA GPU drivers (if you have NVIDIA GPU)
+./scripts/build_nvidia.sh --all
+
+# 3. Install Qualcomm QNN SDK (manual - see docs)
+# Follow: docs/QNN_INTEGRATION.md for hardened installation
+
+# 4. Verify installations
+./scripts/build_nvidia.sh --verify
+./scripts/build_qnn.sh --verbose
+
+# 5. Use all accelerators in your application
+# Intel NPU: via OpenVINO NPU backend
+# Intel iGPU: via OpenVINO GPU backend
+# NVIDIA GPU: via CUDA/PyTorch
+# Qualcomm: via QNN SDK APIs
+```
+
+**Security Notes**:
+- **QNN SDK** (closed-source): Service account isolation, systemd hardening, network isolation
+- **NVIDIA Modules** (open-source): CET/CFI hardening, module signing (MOK), IOMMU isolation, render group restrictions
+
+See [docs/QNN_INTEGRATION.md](docs/QNN_INTEGRATION.md) and [docs/NVIDIA_INTEGRATION.md](docs/NVIDIA_INTEGRATION.md) for complete security hardening guides.
+
+## System Requirements
+
+### Hardware
+- Intel Core Ultra 7 165H (Meteor Lake) or compatible
+- NPU VPU 3720 (Intel AI Boost)
+- Minimum 16GB RAM
+- 50GB free disk space for build
 
 ## Key Features
 
@@ -347,9 +472,57 @@ See [docs/INDEX.md](docs/INDEX.md) for the complete documentation index.
 
 ## License
 
-Components follow their respective licenses (Apache 2.0 for OpenVINO, oneTBB, oneDNN).
-Build scripts and configuration: MIT License.
+This build system follows the licenses of its components:
+- OpenVINO: Apache 2.0
+- oneTBB: Apache 2.0
+- oneDNN: Apache 2.0
+
+Build scripts and configuration: MIT License
+
+## References
+
+### Intel Stack Documentation
+
+- [OpenVINO Documentation](https://docs.openvino.ai/)
+- [Intel NPU Acceleration Library](https://intel.github.io/intel-npu-acceleration-library/)
+- [oneAPI Documentation](https://www.intel.com/content/www/us/en/developer/tools/oneapi/overview.html)
+- [Intel Meteor Lake Architecture](https://www.intel.com/content/www/us/en/products/docs/processors/core-ultra/meteor-lake-architecture-overview.html)
+
+### Multi-Vendor AI Documentation
+
+- [Qualcomm AI Engine Direct (QNN SDK)](https://developer.qualcomm.com/software/qualcomm-ai-engine-direct-sdk)
+- [QNN Integration Guide (HARDVINO)](docs/QNN_INTEGRATION.md)
+- [NVIDIA Open GPU Kernel Modules](https://github.com/NVIDIA/open-gpu-kernel-modules)
+- [NVIDIA Integration Guide (HARDVINO)](docs/NVIDIA_INTEGRATION.md)
+- [NVIDIA Driver Documentation](https://docs.nvidia.com/)
+- [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit)
+- [Intel Stack Manifest](intel_stack.manifest.yml)
+
+### Security & Hardening
+
+- [ImageHarden Security Principles](https://github.com/yourusername/ImageHarden)
+- [Systemd Security Hardening](https://www.freedesktop.org/software/systemd/man/systemd.exec.html)
+
+## Support & Contributing
+
+For issues, questions, or contributions:
+- GitHub Issues: https://github.com/SWORDIntel/HARDVINO/issues
+- Pull Requests welcome
+
+## Security Disclosure
+
+For security vulnerabilities, please contact privately before public disclosure.
+
+## Acknowledgments
+
+- Based on ImageHarden security hardening principles
+- Intel OpenVINO team for NPU support
+- NVIDIA for open-source GPU kernel modules
+- Qualcomm for AI Engine Direct SDK
+- Meteor Lake optimization research by KYBERLOCK Tactical Computing Division
 
 ---
 
-**HARDVINO** - Hardened Intel AI stack for mission-critical applications.
+**HARDVINO** - Hardened multi-vendor AI inference for mission-critical applications.
+
+Built with military-grade security for Intel Meteor Lake NPU VPU 3720 + NVIDIA GPUs + Qualcomm accelerators.

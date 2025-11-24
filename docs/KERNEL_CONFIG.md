@@ -58,6 +58,74 @@ CONFIG_INTEL_IOATDMA=m
 
 ---
 
+## NVIDIA GPU Accelerators (Optional)
+
+### NVIDIA Open GPU Kernel Modules
+
+For NVIDIA GPU support (Turing and newer), the open-source kernel modules are built separately via HARDVINO build scripts.
+
+**Note**: The NVIDIA modules are NOT kernel config options - they are out-of-tree modules built with DKMS.
+
+#### Required Base Kernel Support
+
+```text
+# DRM (Direct Rendering Manager) - required for NVIDIA GPU
+CONFIG_DRM=y
+CONFIG_DRM_KMS_HELPER=y
+
+# PCI support (for PCIe GPUs)
+CONFIG_PCI=y
+CONFIG_PCI_MSI=y
+
+# IOMMU support (for DMA isolation and security)
+CONFIG_IOMMU_SUPPORT=y
+CONFIG_INTEL_IOMMU=y
+CONFIG_INTEL_IOMMU_DEFAULT_ON=y
+
+# Device mapper (for CUDA unified memory)
+CONFIG_BLK_DEV_DM=m
+
+# ACPI support (for GPU power management)
+CONFIG_ACPI=y
+CONFIG_ACPI_VIDEO=y
+
+# Framebuffer console (optional, for display)
+CONFIG_FRAMEBUFFER_CONSOLE=y
+CONFIG_DRM_FBDEV_EMULATION=y
+```
+
+#### Module Signature Requirements for NVIDIA
+
+```text
+# Required for signing NVIDIA modules
+CONFIG_MODULE_SIG=y
+CONFIG_MODULE_SIG_ALL=y
+CONFIG_MODULE_SIG_SHA256=y
+
+# For Secure Boot compatibility
+CONFIG_MODULE_SIG_KEY=""  # Leave empty, will be set by build system
+
+# Optional: Allow loading of unsigned modules during development
+# CONFIG_MODULE_SIG_FORCE=n  # Change to 'y' for production
+```
+
+#### Building NVIDIA Modules
+
+The NVIDIA open-gpu-kernel-modules are built separately:
+
+```bash
+# Build with HARDVINO hardening
+cd /path/to/HARDVINO
+./scripts/build_nvidia.sh --all
+
+# Verify installation
+./scripts/build_nvidia.sh --verify
+```
+
+See [NVIDIA_INTEGRATION.md](NVIDIA_INTEGRATION.md) for complete build instructions.
+
+---
+
 ## Security / HIPS Stack
 
 The DSMIL kernel uses BPF LSM and AppArmor (no SELinux).
@@ -126,7 +194,8 @@ Copy this entire block into a fragment file (e.g., `dsmil_intel.config`):
 
 ```text
 # ============================================================================
-# DSMIL Intel Acceleration Stack - Kernel Config Fragment
+# DSMIL Multi-Vendor AI Acceleration Stack - Kernel Config Fragment
+# Intel + NVIDIA + Qualcomm Support
 # ============================================================================
 
 # --- Intel Accelerators ---
@@ -146,6 +215,20 @@ CONFIG_CRYPTO_DEV_QAT_DH895xCCVF=m
 CONFIG_INTEL_IDXD=m
 CONFIG_INTEL_IDXD_COMPAT=m
 CONFIG_INTEL_IOATDMA=m
+
+# --- NVIDIA GPU Support (for out-of-tree modules) ---
+CONFIG_DRM=y
+CONFIG_DRM_KMS_HELPER=y
+CONFIG_PCI=y
+CONFIG_PCI_MSI=y
+CONFIG_IOMMU_SUPPORT=y
+CONFIG_INTEL_IOMMU=y
+CONFIG_INTEL_IOMMU_DEFAULT_ON=y
+CONFIG_BLK_DEV_DM=m
+CONFIG_ACPI=y
+CONFIG_ACPI_VIDEO=y
+CONFIG_FRAMEBUFFER_CONSOLE=y
+CONFIG_DRM_FBDEV_EMULATION=y
 
 # --- Security / HIPS Stack (no SELinux) ---
 CONFIG_SECURITY=y
@@ -222,6 +305,14 @@ lsmod | grep qat
 
 # DSA/IAA
 ls /sys/bus/dsa/devices/
+
+# NVIDIA GPU (if installed)
+lsmod | grep nvidia
+nvidia-smi
+ls -la /dev/nvidia*
+
+# IOMMU (for NVIDIA DMA isolation)
+dmesg | grep -i iommu
 
 # Module signatures
 cat /proc/sys/kernel/modules_disabled

@@ -1,0 +1,223 @@
+# ============================================================================
+# Qualcomm QNN Inference Service (Hardened)
+# HARDVINO / DSMIL Platform
+# ============================================================================
+#
+# Installation:
+#   1. Review and customize this template for your application
+#   2. Copy to: /etc/systemd/system/qnn-inference.service
+#   3. Reload: systemctl daemon-reload
+#   4. Enable: systemctl enable qnn-inference.service
+#   5. Start:  systemctl start qnn-inference.service
+#
+# Security Hardening:
+#   - NoNewPrivileges: Prevents privilege escalation
+#   - ProtectSystem=strict: Read-only root filesystem
+#   - ProtectHome: No access to user home directories
+#   - PrivateTmp: Isolated /tmp directory
+#   - MemoryDenyWriteExecute: Prevents JIT shellcode execution
+#   - RestrictAddressFamilies: Limits network protocols
+#   - CapabilityBoundingSet: Drops all Linux capabilities
+#   - SystemCallFilter: Restricts dangerous syscalls
+#
+# See: docs/QNN_INTEGRATION.md for full documentation
+# ============================================================================
+
+[Unit]
+Description=Qualcomm QNN AI Inference Service (Hardened)
+Documentation=https://developer.qualcomm.com/qnn
+Documentation=file:///opt/qcom/aistack/qnn/current/docs
+After=network.target
+# Uncomment if QNN depends on specific hardware initialization
+# After=dev-accel-accel0.device
+
+[Service]
+Type=simple
+
+# User/Group isolation
+User=qnnsvc
+Group=qnnsvc
+
+# Working directory
+WorkingDirectory=/opt/qcom/aistack/qnn/current
+
+# ============================================================================
+# Environment Variables
+# ============================================================================
+Environment="QNN_SDK_ROOT=/opt/qcom/aistack/qnn/current"
+Environment="LD_LIBRARY_PATH=/opt/qcom/aistack/qnn/current/lib/x86_64-linux-gnu"
+
+# Optional: Specify QNN log level (0=ERROR, 1=WARN, 2=INFO, 3=DEBUG)
+Environment="QNN_LOG_LEVEL=1"
+
+# Optional: Backend selection (cpu, gpu, dsp, htp)
+Environment="QNN_BACKEND=cpu"
+
+# ============================================================================
+# Application Command
+# ============================================================================
+# CUSTOMIZE THIS: Replace with your actual QNN application
+#
+# Example 1: qnn-net-run (built-in QNN tool)
+ExecStart=/opt/qcom/aistack/qnn/current/bin/qnn-net-run \
+    --backend ${QNN_BACKEND} \
+    --model /var/lib/qnn/models/production.qnn \
+    --input_list /var/lib/qnn/inputs/input.txt \
+    --output_dir /var/lib/qnn/outputs
+
+# Example 2: Custom Python application
+# ExecStart=/opt/qcom/aistack/qnn/venv/bin/python3 \
+#     /opt/qcom/aistack/qnn/apps/inference_server.py \
+#     --config /etc/qnn/config.yaml
+
+# Example 3: Custom C/C++ application
+# ExecStart=/opt/qcom/aistack/qnn/bin/custom_inference_app \
+#     --model /var/lib/qnn/models/model.qnn \
+#     --listen 127.0.0.1:8080
+
+# ============================================================================
+# Security Hardening (Defense in Depth)
+# ============================================================================
+
+# Prevent privilege escalation
+NoNewPrivileges=yes
+
+# Filesystem protections
+ProtectSystem=strict          # Read-only /usr, /boot, /efi
+ProtectHome=yes               # No access to /home, /root
+PrivateTmp=yes                # Isolated /tmp and /var/tmp
+PrivateDevices=yes            # No access to physical devices (adjust if GPU/DSP needed)
+ProtectKernelTunables=yes     # Read-only /proc/sys, /sys
+ProtectKernelModules=yes      # Cannot load kernel modules
+ProtectKernelLogs=yes         # Cannot read kernel logs
+ProtectControlGroups=yes      # Read-only /sys/fs/cgroup
+ProtectProc=invisible         # Hide other users' processes in /proc
+
+# Filesystem access control
+# Read-only: QNN SDK installation
+ReadOnlyPaths=/opt/qcom/aistack/qnn
+
+# Read-write: Model storage, outputs, logs
+ReadWritePaths=/var/lib/qnn/models
+ReadWritePaths=/var/lib/qnn/outputs
+ReadWritePaths=/var/log/qnn
+
+# Temporary files (if needed)
+# ReadWritePaths=/var/lib/qnn/tmp
+
+# Network restrictions
+# OPTION 1: Allow network (if inference requires network I/O)
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+# OPTION 2: Deny network (if inference is local-only) - uncomment to enable
+# RestrictAddressFamilies=AF_UNIX
+# PrivateNetwork=yes
+# IPAddressDeny=any
+# IPAddressAllow=localhost
+
+# Namespace isolation
+RestrictNamespaces=yes
+PrivateIPC=yes
+# PrivateUsers=yes  # Uncomment for user namespace isolation (may break some apps)
+
+# Misc protections
+LockPersonality=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+RemoveIPC=yes
+
+# Memory protections
+# ⚠️ WARNING: MemoryDenyWriteExecute may break QNN if it uses JIT compilation
+# Disable if QNN fails to start with "cannot allocate memory" errors
+MemoryDenyWriteExecute=yes
+# If QNN fails, comment out the line above and document in INSTALL_RECORD.txt
+
+# Capability restrictions (drop all capabilities)
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+# Syscall filtering
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources @obsolete @debug @mount @swap @reboot @module @raw-io
+
+# Advanced syscall restrictions (uncomment if compatible with your QNN app)
+# SystemCallFilter=~@clock @cpu-emulation @pkey
+# SystemCallArchitectures=native
+
+# ============================================================================
+# Resource Limits
+# ============================================================================
+# Adjust based on your workload requirements
+
+# Memory limit (4GB default - increase for large models)
+MemoryMax=4G
+MemoryHigh=3.5G
+
+# CPU quota (200% = 2 full cores)
+CPUQuota=200%
+
+# Task limit (max threads/processes)
+TasksMax=256
+
+# File descriptor limit
+LimitNOFILE=4096
+
+# Core dumps (disable for security)
+LimitCORE=0
+
+# ============================================================================
+# Logging
+# ============================================================================
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=qnn-inference
+
+# Log level: debug, info, notice, warning, err, crit, alert, emerg
+SyslogLevel=info
+
+# ============================================================================
+# Restart Policy
+# ============================================================================
+Restart=on-failure
+RestartSec=5s
+StartLimitInterval=300s
+StartLimitBurst=5
+
+# Graceful shutdown timeout
+TimeoutStopSec=30s
+
+# ============================================================================
+# Watchdog (Optional)
+# ============================================================================
+# Uncomment if your application supports systemd watchdog
+# WatchdogSec=60s
+
+[Install]
+WantedBy=multi-user.target
+
+# ============================================================================
+# CUSTOMIZATION CHECKLIST
+# ============================================================================
+# Before deploying this service, ensure you have:
+#
+# ✓ Replaced ExecStart with your actual QNN application command
+# ✓ Created required directories:
+#     - /var/lib/qnn/models (for model files)
+#     - /var/lib/qnn/outputs (for inference results)
+#     - /var/log/qnn (for application logs)
+# ✓ Set correct ownership:
+#     - chown -R qnnsvc:qnnsvc /var/lib/qnn
+#     - chown -R qnnsvc:qnnsvc /var/log/qnn
+# ✓ Adjusted ReadWritePaths to match your directory structure
+# ✓ Tested MemoryDenyWriteExecute compatibility (disable if needed)
+# ✓ Configured network restrictions (allow/deny based on requirements)
+# ✓ Adjusted resource limits (MemoryMax, CPUQuota) for your workload
+# ✓ Reviewed and tested all security hardening options
+# ✓ Documented any disabled security features in INSTALL_RECORD.txt
+#
+# Test the service:
+#   systemctl daemon-reload
+#   systemctl start qnn-inference.service
+#   systemctl status qnn-inference.service
+#   journalctl -u qnn-inference.service -f
+# ============================================================================
