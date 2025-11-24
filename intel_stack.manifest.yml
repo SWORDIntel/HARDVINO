@@ -3,66 +3,106 @@
 # HARDVINO / DSMIL Platform
 # ============================================================================
 #
-# This manifest defines all Intel stack components with:
-#   - Repository locations
-#   - Installation paths
-#   - Per-component AI prompts for integration guidance
+# HARDVINO supersedes upstream OpenVINO with:
+#   - Hardened build (CET/CFI, RELRO, FORTIFY=3)
+#   - Meteor Lake optimization (AVX2, AVX-VNNI)
+#   - Integrated oneDNN, oneTBB
+#   - NPU VPU 3720 support
 #
 # Component Categories:
-#   - core: Required dependencies (HARDVINO, NUC2.1)
-#   - runtimes: Optional runtime libraries
+#   - core: HARDVINO (supersedes OpenVINO), NUC2.1
+#   - runtimes: Runtime libraries for accelerators
 #   - toolchains: Build tools and libraries
 #   - kernel_drivers: Kernel-level device drivers
 #   - profiling_and_tools: Performance and optimization tools
+#   - platform: DSMIL PLATFORM integration
+#
+# Total: 34 submodules
 #
 # ============================================================================
 
 intel_stack:
   # ==========================================================================
   # CORE DEPENDENCIES
-  # These are the only required Intel AI dependencies for DSMIL
+  # Required Intel AI dependencies for DSMIL
   # ==========================================================================
   core:
     hardvino:
       repo: https://github.com/SWORDIntel/HARDVINO
-      path: submodules/HARDVINO
+      supersedes: "openvinotoolkit/openvino"
       required: true
       prompt: >
-        Hardened OpenVINO/oneAPI toolchain tuned for Intel Core Ultra 7 165H and
-        the Meteor Lake NPU. Builds OpenVINO, oneDNN, oneTBB and related libs
-        with LLVM/Clang, AVX2/AVX-VNNI, CET/CFI, RELRO, and FORTIFY=3. This is
-        the only entrypoint for OpenVINO in DSMIL.
+        HARDVINO supersedes upstream OpenVINO. Provides hardened OpenVINO/oneAPI
+        toolchain tuned for Intel Core Ultra 7 165H and Meteor Lake NPU. Builds
+        with LLVM/Clang, AVX2/AVX-VNNI, CET/CFI, RELRO, and FORTIFY=3. Integrates
+        oneDNN and oneTBB. This is the ONLY OpenVINO entrypoint - do not use
+        upstream openvino directly.
 
     nuc2_1:
       repo: https://github.com/SWORDIntel/NUC2.1
-      path: submodules/NUC2.1
+      path: NUC2.1
       required: true
       prompt: >
         Movidius Myriad X / NCS2 ASIC stack. Provides a modern Linux kernel
         driver (movidius_x_vpu.ko, vfio_movidius.ko) plus Rust NCAPI v2 tools
-        and TUI benchmarks. This replaces legacy Intel/Movidius SDKs and is the
-        only supported Movidius path.
+        and TUI benchmarks. This replaces legacy Intel/Movidius SDKs.
 
   # ==========================================================================
   # RUNTIMES
-  # Optional runtime libraries for specific accelerators
+  # Runtime libraries for Intel accelerators
   # ==========================================================================
   runtimes:
+    npu:
+      - repo: https://github.com/intel/linux-npu-driver
+        path: submodules/intel-stack/runtimes/npu/linux-npu-driver
+        optional: true
+        prompt: >
+          Linux kernel driver and userspace tools for Intel NPU (VPU 3720).
+          Provides the kernel interface for OpenVINO NPU backend.
+
+      - repo: https://github.com/intel/intel-npu-acceleration-library
+        path: submodules/intel-stack/runtimes/npu/intel-npu-acceleration-library
+        optional: true
+        prompt: >
+          High-level Python library for NPU acceleration. Provides easy-to-use
+          APIs for running inference on the Intel NPU without OpenVINO.
+
     gpu_compute:
       - repo: https://github.com/intel/compute-runtime
         path: submodules/intel-stack/runtimes/gpu-compute/compute-runtime
         optional: true
         prompt: >
           Intel GPU compute runtime providing OpenCL and Level Zero backends
-          for Xe/iGPU. Used as the low-level driver layer for GPU inference and
-          benchmarks outside the HARDVINO/OpenVINO path.
+          for Xe/iGPU. Low-level driver layer for GPU inference and compute.
 
       - repo: https://github.com/intel/intel-graphics-compiler
         path: submodules/intel-stack/runtimes/gpu-compute/intel-graphics-compiler
         optional: true
         prompt: >
           LLVM-based SPIR-V/shader compiler used by the Intel compute runtime.
-          Serves as the codegen backend for OpenCL and Level Zero.
+          Codegen backend for OpenCL and Level Zero.
+
+      - repo: https://github.com/oneapi-src/level-zero
+        path: submodules/intel-stack/runtimes/gpu-compute/level-zero
+        optional: true
+        prompt: >
+          Level Zero API loader and headers. Low-level GPU programming interface
+          used by oneAPI and compute-runtime for direct hardware access.
+
+    gaudi:
+      - repo: https://github.com/HabanaAI/Model-References
+        path: submodules/intel-stack/runtimes/gaudi/Model-References
+        optional: true
+        prompt: >
+          Habana/Gaudi model reference implementations and examples. Used for
+          benchmarking and porting models to Gaudi accelerators.
+
+      - repo: https://github.com/HabanaAI/vllm-fork
+        path: submodules/intel-stack/runtimes/gaudi/vllm-habana
+        optional: true
+        prompt: >
+          Habana-optimized vLLM fork for running large language models on
+          Intel Gaudi accelerators with high throughput inference.
 
     media:
       - repo: https://github.com/intel/media-driver
@@ -70,15 +110,14 @@ intel_stack:
         optional: true
         prompt: >
           Modern VAAPI media driver for Intel GPUs. Enables hardware
-          encode/decode and post-processing for video workloads that IMAGEHARDER
-          or other DSMIL tools may rely on.
+          encode/decode and post-processing for video workloads.
 
       - repo: https://github.com/intel/intel-vaapi-driver
         path: submodules/intel-stack/runtimes/media/intel-vaapi-driver
         optional: true
         prompt: >
-          Legacy VAAPI driver for older Intel generations. Kept only for
-          backward compatibility on non-Meteor Lake hardware.
+          Legacy VAAPI driver for older Intel generations. Kept for
+          backward compatibility on pre-Meteor Lake hardware.
 
     qat_crypto:
       - repo: https://github.com/intel/qatlib
@@ -86,22 +125,21 @@ intel_stack:
         optional: true
         prompt: >
           User-space library for Intel QuickAssist Technology (QAT) providing
-          crypto and compression offload APIs for COCKLOCKER and other secure
-          networking/storage components.
+          crypto and compression offload APIs.
 
       - repo: https://github.com/intel/QAT_Engine
         path: submodules/intel-stack/runtimes/qat/QAT_Engine
         optional: true
         prompt: >
-          OpenSSL engine that routes TLS and related crypto operations through
-          QAT hardware accelerators when available.
+          OpenSSL engine that routes TLS and crypto operations through
+          QAT hardware accelerators.
 
       - repo: https://github.com/intel/QAT-ZSTD-Plugin
         path: submodules/intel-stack/runtimes/qat/QAT-ZSTD-Plugin
         optional: true
         prompt: >
-          Zstandard plugin that offloads compression work to QAT hardware for
-          high-throughput logging, telemetry, and archive paths.
+          Zstandard plugin that offloads compression to QAT hardware for
+          high-throughput logging and archive paths.
 
     openvino_extras:
       - repo: https://github.com/openvinotoolkit/openvino_contrib
@@ -109,44 +147,49 @@ intel_stack:
         optional: true
         prompt: >
           Additional OpenVINO plugins and experimental modules that can be
-          selectively enabled via HARDVINO to add extra ops/backends.
+          selectively enabled via HARDVINO.
 
   # ==========================================================================
   # TOOLCHAINS
   # Build tools, compilers, and supporting libraries
   # ==========================================================================
   toolchains:
-    llvm:
-      - repo: https://github.com/llvm/llvm-project
-        path: submodules/intel-stack/toolchains/llvm/llvm-project
-        optional: true
-        prompt: >
-          Upstream LLVM/Clang baseline. HARDVINO applies Meteor Lake-specific
-          and CFI/hardening patches on top of this tree. Used for diffing and
-          keeping patches forward-portable.
-
-      - repo: https://github.com/intel/llvm
-        path: submodules/intel-stack/toolchains/llvm/intel-llvm
-        optional: true
-        prompt: >
-          Intel's DPC++/oneAPI-focused LLVM fork. Serves as a reference for
-          GPU/NPU codegen behaviour and oneAPI integration; not the primary
-          toolchain but an important upstream.
-
     oneapi_libs:
       - repo: https://github.com/uxlfoundation/oneDAL
         path: submodules/intel-stack/toolchains/oneapi-libs/oneDAL
         optional: true
         prompt: >
-          oneDAL analytics kernels. Used as high-performance building blocks
-          inside DSMIL data/ML services when oneAPI-style algorithms are needed.
+          oneDAL analytics kernels. High-performance building blocks for
+          data/ML services using oneAPI-style algorithms.
 
-      - repo: https://github.com/uxlfoundation/oneTBB
-        path: submodules/intel-stack/toolchains/oneapi-libs/oneTBB
+      - repo: https://github.com/uxlfoundation/oneMKL
+        path: submodules/intel-stack/toolchains/oneapi-libs/oneMKL
         optional: true
         prompt: >
-          oneTBB tasking and scheduling library. Ensures consistent, scalable
-          parallelism across DSMIL components and the Intel AI stack.
+          oneAPI Math Kernel Library interfaces. Provides optimized BLAS,
+          LAPACK, FFT, and sparse operations for Intel hardware.
+
+      - repo: https://github.com/uxlfoundation/oneCCL
+        path: submodules/intel-stack/toolchains/oneapi-libs/oneCCL
+        optional: true
+        prompt: >
+          oneAPI Collective Communications Library. Enables efficient
+          distributed training and multi-node AI workloads.
+
+      - repo: https://github.com/oneapi-src/oneDPL
+        path: submodules/intel-stack/toolchains/oneapi-libs/oneDPL
+        optional: true
+        prompt: >
+          oneAPI Data Parallel Library (Parallel STL). Provides parallel
+          algorithms and execution policies for Intel hardware.
+
+    xe_templates:
+      - repo: https://github.com/intel/xetla
+        path: submodules/intel-stack/toolchains/xetla
+        optional: true
+        prompt: >
+          Xe Template Library for Architecture (XeTLA). Low-level GPU
+          programming templates for Intel Xe graphics.
 
   # ==========================================================================
   # KERNEL DRIVERS
@@ -162,28 +205,25 @@ intel_stack:
         - CONFIG_DRM_ACCEL_IVPU=m
       prompt: >
         In-kernel driver for the Meteor Lake on-die NPU, exposed via the accel
-        subsystem (/sys/class/accel/accel0, /dev/accel/accel0). Required for
-        offloading AI workloads onto the NPU.
+        subsystem (/sys/class/accel/accel0, /dev/accel/accel0).
 
     xe_igpu:
-      device: "Intel Xe iGPU"
+      device: "Intel Xe iGPU (Xe-LPG)"
       driver: "xe"
       config_options:
         - CONFIG_DRM_XE=m
       prompt: >
         Intel Xe graphics driver for integrated GPU compute and display.
-        Provides the hardware backend for Level Zero and OpenCL workloads.
+        Backend for Level Zero and OpenCL workloads.
 
     vpu_movidius:
-      device: "Myriad X VPU (NCS2 etc.)"
+      device: "Myriad X VPU (NCS2)"
       source_repo: https://github.com/SWORDIntel/NUC2.1
       config_options:
         - CONFIG_VFIO_PCI=m
         - CONFIG_USB_XHCI_HCD=y
       prompt: >
-        Movidius VPU support implemented via NUC2.1 kernel modules and VFIO
-        integration. Enables NCS2 and PCIe Myriad X use for inference and
-        experimentation.
+        Movidius VPU support via NUC2.1 kernel modules and VFIO integration.
 
     qat:
       device: "QuickAssist (chipset/PCIe ASICs)"
@@ -192,9 +232,7 @@ intel_stack:
         - CONFIG_CRYPTO_DEV_QAT_DH895xCC=m
         - CONFIG_CRYPTO_DEV_QAT_DH895xCCVF=m
       prompt: >
-        Kernel crypto and compression offload engine. Provides hardware-backed
-        acceleration for COCKLOCKER, VPNs, TLS, and Zstd-heavy data paths on
-        QAT-equipped systems.
+        Kernel crypto and compression offload engine for QAT-equipped systems.
 
     dsa_iaa:
       device: "Intel DSA / IAA"
@@ -202,17 +240,30 @@ intel_stack:
         - CONFIG_INTEL_IDXD=m
         - CONFIG_INTEL_IDXD_COMPAT=m
       prompt: >
-        Data Streaming Accelerator and In-Memory Analytics Accelerator support.
-        Offloads memcopy/fill, compression, and analytics primitives and is
-        managed via the idxd/accel subsystem.
+        Data Streaming Accelerator and In-Memory Analytics Accelerator.
+        Offloads memcopy, compression, and analytics primitives.
 
     ioat_dma:
       device: "Intel I/OAT DMA"
       config_options:
         - CONFIG_INTEL_IOATDMA=m
       prompt: >
-        DMA engine used to offload high-volume memory transfers, improving
-        throughput for NVMe, networking, and other I/O-heavy DSMIL operations.
+        DMA engine for high-volume memory transfers in I/O-heavy operations.
+
+    mcm_1000:
+      device: "MCM-1000 (DSMIL NPU Abstraction)"
+      driver: "dsmil_mcm / intel_vpu"
+      hardware: "Intel Meteor Lake NPU (VPU 3720)"
+      virtual_devices: 32
+      device_range: "31-62"
+      tokens_per_device: 3
+      total_registers: 96
+      prompt: >
+        DSMIL driver abstraction layer for the Intel Meteor Lake NPU. Creates
+        32 virtualized devices (IDs 31-62) with 3 tokens each, providing 96
+        unified registers for NPU access. Maps to the underlying intel_vpu
+        kernel driver and /sys/class/accel/ subsystem. This is not separate
+        hardware but an abstraction over the built-in Meteor Lake NPU.
 
   # ==========================================================================
   # PROFILING AND TOOLS
@@ -221,58 +272,131 @@ intel_stack:
   profiling_and_tools:
     perfspect:
       repo: https://github.com/intel/PerfSpect
+      path: submodules/intel-stack/tools/PerfSpect
       optional: true
       prompt: >
-        Performance analysis tool that wraps perf and PMU counters using Intel's
-        Top-Down Microarchitecture Analysis. Used to diagnose CPU bottlenecks
-        and validate whether accelerators are relieving load as expected.
+        Performance analysis tool using Intel's Top-Down Microarchitecture
+        Analysis. Diagnoses CPU bottlenecks and validates accelerator offload.
 
     neural_compressor:
       repo: https://github.com/intel/neural-compressor
+      path: submodules/intel-stack/tools/neural-compressor
       optional: true
       prompt: >
         Model compression toolkit (quantization, pruning, distillation) for
-        Intel CPUs, GPUs, and accelerators. Used at build/CI time to produce
-        INT8/FP8-optimized models for HARDVINO and Optimum-Intel.
+        Intel CPUs, GPUs, and accelerators. Produces INT8/FP8 models.
 
     intel_extension_for_pytorch:
       repo: https://github.com/intel/intel-extension-for-pytorch
+      path: submodules/intel-stack/tools/intel-extension-for-pytorch
       optional: true
       prompt: >
-        Intel-specific acceleration layer for PyTorch that adds optimized
-        kernels for Intel CPUs and GPUs. Treated as a legacy booster, with most
-        functionality gradually moving into upstream PyTorch.
+        Intel-specific acceleration layer for PyTorch with optimized kernels
+        for Intel CPUs and GPUs.
+
+    intel_extension_for_tensorflow:
+      repo: https://github.com/intel/intel-extension-for-tensorflow
+      path: submodules/intel-stack/tools/intel-extension-for-tensorflow
+      optional: true
+      prompt: >
+        Intel-specific acceleration layer for TensorFlow with optimized ops
+        for Intel CPUs and XPUs.
 
     optimum_intel:
       repo: https://github.com/huggingface/optimum-intel
+      path: submodules/intel-stack/tools/optimum-intel
       optional: true
       prompt: >
-        Hugging Face integration layer that connects Transformers/Diffusers to
-        Intel tools like OpenVINO and Neural Compressor. The standard path for
-        running HF models on the Intel stack.
+        Hugging Face integration layer connecting Transformers/Diffusers to
+        Intel tools like OpenVINO and Neural Compressor.
 
     intel_ai_catalog:
       repo: https://github.com/intel/ai
+      path: submodules/intel-stack/tools/intel-ai-catalog
       optional: true
       prompt: >
         Reference catalog of Intel-optimized AI models, containers, and
-        examples. Used as a discovery and benchmarking source, not a direct
-        runtime dependency.
+        examples for benchmarking and discovery.
 
     open3d:
       repo: https://github.com/isl-org/Open3D
+      path: submodules/intel-stack/tools/Open3D
       optional: true
       prompt: >
         3D perception library (point clouds, meshes, SLAM, RGB-D). Built with
-        the same LLVM + AVX2/VNNI profile and used for any 3D sensing or
-        reconstruction components layered into DSMIL.
+        AVX2/VNNI profile for 3D sensing components.
+
+    neural_speed:
+      repo: https://github.com/intel/neural-speed
+      path: submodules/intel-stack/tools/neural-speed
+      optional: true
+      prompt: >
+        Intel Neural Speed library for optimized LLM inference on Intel
+        hardware. Provides fast INT4/INT8 inference for transformer models.
+
+    torch_xpu_ops:
+      repo: https://github.com/intel/torch-xpu-ops
+      path: submodules/intel-stack/tools/torch-xpu-ops
+      optional: true
+      prompt: >
+        Intel XPU operators for PyTorch. Provides optimized ops for Intel
+        GPUs and accelerators in the PyTorch framework.
+
+    xess:
+      repo: https://github.com/intel/xess
+      path: submodules/intel-stack/tools/xess
+      optional: true
+      prompt: >
+        Intel Xe Super Sampling (XeSS) SDK. AI-powered upscaling for games
+        and real-time graphics on Intel Xe GPUs.
+
+    ros2_openvino_toolkit:
+      repo: https://github.com/intel/ros2_openvino_toolkit
+      path: submodules/intel-stack/tools/ros2_openvino_toolkit
+      optional: true
+      prompt: >
+        ROS2 integration for OpenVINO. Enables AI inference in robotics
+        applications using the ROS2 framework.
+
+    openvino_rs:
+      repo: https://github.com/intel/openvino-rs
+      path: submodules/intel-stack/tools/openvino-rs
+      optional: true
+      prompt: >
+        Rust bindings for OpenVINO. Enables safe, ergonomic Rust access
+        to OpenVINO inference capabilities.
+
+  # ==========================================================================
+  # PLATFORM
+  # DSMIL AI Platform integration
+  # ==========================================================================
+  platform:
+    swordintel_platform:
+      repo: https://github.com/SWORDIntel/PLATFORM
+      path: submodules/PLATFORM
+      required: false
+      prompt: >
+        SWORDIntel PLATFORM AI framework. Complete AI platform that integrates
+        with HARDVINO and the Intel acceleration stack. Install via the
+        single entrypoint: ./install.sh --platform
 
 # ============================================================================
 # METADATA
 # ============================================================================
 metadata:
-  version: "1.0.0"
+  version: "3.1.0"
+  submodule_count: 34
+  note: "HARDVINO supersedes upstream OpenVINO"
   target_platform: "Intel Core Ultra 7 165H (Meteor Lake)"
-  target_npu: "VPU 3720 (8086:7d1d)"
+  target_accelerators:
+    - name: "NPU (VPU 3720)"
+      pci_id: "8086:7d1d"
+      benchmark: "scripts/benchmark_npu.sh"
+      dsmil_abstraction: "MCM-1000 (32 virtual devices, 96 registers)"
+    - name: "iGPU (Xe-LPG)"
+      benchmark: "scripts/benchmark_gpu.sh"
+    - name: "CPU (AVX-VNNI)"
+      benchmark: "scripts/benchmark_cpu.sh"
+  performance_note: "TOPS values are workload-dependent. Run benchmark scripts for actual measurements."
   security_profile: "AVX2/AVX-VNNI, CET/CFI, RELRO, FORTIFY=3"
   dsmil_reference: "https://github.com/SWORDIntel/DSMILSystem"
