@@ -1,5 +1,5 @@
 # ============================================================================
-# Intel Acceleration Stack Component Manifest
+# Intel + Multi-Vendor AI Acceleration Stack Component Manifest
 # HARDVINO / DSMIL Platform
 # ============================================================================
 #
@@ -11,13 +11,13 @@
 #
 # Component Categories:
 #   - core: HARDVINO (supersedes OpenVINO), NUC2.1
-#   - runtimes: Runtime libraries for accelerators
+#   - runtimes: Runtime libraries for accelerators (Intel + Qualcomm)
 #   - toolchains: Build tools and libraries
 #   - kernel_drivers: Kernel-level device drivers
 #   - profiling_and_tools: Performance and optimization tools
 #   - platform: DSMIL PLATFORM integration
 #
-# Total: 34 submodules
+# Total: 35 submodules (34 Intel + 1 Qualcomm)
 #
 # ============================================================================
 
@@ -381,12 +381,73 @@ intel_stack:
         single entrypoint: ./install.sh --platform
 
 # ============================================================================
+# QUALCOMM ACCELERATION STACK
+# Multi-vendor AI support for Qualcomm SoCs and AI accelerators
+# ============================================================================
+qualcomm_stack:
+  # ==========================================================================
+  # QNN SDK (Qualcomm Neural Network SDK)
+  # Closed-source AI inference runtime - manual installation required
+  # ==========================================================================
+  qnn_sdk:
+    name: "Qualcomm AI Engine Direct (QNN)"
+    version: "2.18.0+"
+    installation: "manual"
+    install_path: "/opt/qcom/aistack/qnn"
+    documentation: "docs/QNN_INTEGRATION.md"
+    optional: true
+    closed_source: true
+    license: "Proprietary (Qualcomm Developer License)"
+    source_url: "https://developer.qualcomm.com/software/qualcomm-ai-engine-direct-sdk"
+    backends:
+      - cpu
+      - gpu
+      - dsp
+      - htp  # Hexagon Tensor Processor
+    target_hardware:
+      - "Qualcomm Cloud AI 100 (PCIe accelerator)"
+      - "Snapdragon 8 Gen 2/3 (mobile SoCs)"
+      - "Snapdragon X Elite (laptop SoCs)"
+      - "Generic Qualcomm Hexagon DSPs"
+    use_cases:
+      - "Multi-vendor AI inference (Intel + Qualcomm)"
+      - "Edge deployments with Snapdragon NPUs"
+      - "Qualcomm Cloud AI 100 accelerator cards"
+      - "Heterogeneous compute research"
+    security_hardening:
+      - "Service account isolation (qnnsvc:qnnsvc)"
+      - "Filesystem permissions (0750 root:qnnsvc)"
+      - "Systemd hardening (NoNewPrivileges, ProtectSystem=strict)"
+      - "Network isolation (IPAddressDeny in systemd)"
+      - "Read-only library mount (/opt/qcom/aistack/qnn/*/lib)"
+      - "MemoryDenyWriteExecute (if compatible)"
+      - "Capability bounding (no CAP_SYS_ADMIN)"
+    integration:
+      env_vars:
+        - "QNN_SDK_ROOT=/opt/qcom/aistack/qnn/current"
+        - "LD_LIBRARY_PATH=$QNN_SDK_ROOT/lib/x86_64-linux-gnu"
+      cmake_function: "target_link_qnn(target)"
+      build_stage: "6.5 (after QAT, before ML frameworks)"
+      systemd_service: "/etc/systemd/system/qnn-inference.service"
+    prompt: >
+      Qualcomm Neural Network (QNN) SDK for AI inference on Qualcomm
+      accelerators. Closed-source runtime supporting CPU, GPU, DSP, and HTP
+      (Hexagon Tensor Processor) backends. Used for multi-vendor AI deployments
+      with Intel + Qualcomm hardware, Cloud AI 100 accelerator cards, and
+      Snapdragon edge devices. Installation is MANUAL via Qualcomm Package
+      Manager (qpm-cli) with developer portal authentication. See
+      docs/QNN_INTEGRATION.md for hardened installation procedure with systemd
+      confinement, service account isolation, and filesystem restrictions.
+      This is an optional extension to the core Intel HARDVINO stack.
+
+# ============================================================================
 # METADATA
 # ============================================================================
 metadata:
-  version: "3.1.0"
+  version: "3.2.0"
   submodule_count: 34
-  note: "HARDVINO supersedes upstream OpenVINO"
+  external_sdks: 1  # Qualcomm QNN (manual installation)
+  note: "HARDVINO supersedes upstream OpenVINO; Multi-vendor support (Intel + Qualcomm)"
   target_platform: "Intel Core Ultra 7 165H (Meteor Lake)"
   target_accelerators:
     - name: "NPU (VPU 3720)"
