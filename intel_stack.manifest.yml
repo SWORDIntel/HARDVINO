@@ -366,6 +366,15 @@ intel_stack:
         Rust bindings for OpenVINO. Enables safe, ergonomic Rust access
         to OpenVINO inference capabilities.
 
+    ai_containers:
+      repo: https://github.com/intel/ai-containers
+      path: submodules/intel-stack/tools/ai-containers
+      optional: true
+      prompt: >
+        Intel AI Containers repository. Pre-built container images and
+        Dockerfiles for Intel-optimized AI workloads including PyTorch,
+        TensorFlow, and OpenVINO on Intel hardware.
+
   # ==========================================================================
   # PLATFORM
   # DSMIL AI Platform integration
