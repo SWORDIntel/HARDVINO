@@ -11,13 +11,13 @@
 #
 # Component Categories:
 #   - core: HARDVINO (supersedes OpenVINO), NUC2.1
-#   - runtimes: Runtime libraries for accelerators (Intel + Qualcomm)
+#   - runtimes: Runtime libraries for accelerators (Intel + Qualcomm + NVIDIA)
 #   - toolchains: Build tools and libraries
 #   - kernel_drivers: Kernel-level device drivers
 #   - profiling_and_tools: Performance and optimization tools
 #   - platform: DSMIL PLATFORM integration
 #
-# Total: 35 submodules (34 Intel + 1 Qualcomm)
+# Total: 36 submodules (34 Intel + 1 NVIDIA + 1 Qualcomm external)
 #
 # ============================================================================
 
@@ -441,13 +441,89 @@ qualcomm_stack:
       This is an optional extension to the core Intel HARDVINO stack.
 
 # ============================================================================
+# NVIDIA ACCELERATION STACK
+# Multi-vendor GPU support for NVIDIA datacenter and consumer GPUs
+# ============================================================================
+nvidia_stack:
+  # ==========================================================================
+  # NVIDIA Open GPU Kernel Modules
+  # Open-source kernel driver for NVIDIA GPUs (Turing and newer)
+  # ==========================================================================
+  open_gpu_kernel_modules:
+    repo: https://github.com/NVIDIA/open-gpu-kernel-modules
+    path: submodules/nvidia-stack/drivers/open-gpu-kernel-modules
+    optional: true
+    open_source: true
+    license: "MIT + GPL-2.0"
+    documentation: "docs/NVIDIA_INTEGRATION.md"
+    build_script: "scripts/build_nvidia.sh"
+    supported_gpus:
+      - "NVIDIA Turing (RTX 20 series, T4, A100)"
+      - "NVIDIA Ampere (RTX 30 series, A10, A30, A40, A100)"
+      - "NVIDIA Ada Lovelace (RTX 40 series, L4, L40)"
+      - "NVIDIA Hopper (H100, H200)"
+      - "NVIDIA Blackwell (B100, B200) - future support"
+    kernel_modules:
+      - nvidia.ko          # Core GPU driver
+      - nvidia-modeset.ko  # Display mode setting
+      - nvidia-uvm.ko      # Unified Virtual Memory
+      - nvidia-drm.ko      # DRM/KMS integration
+    target_hardware:
+      - "NVIDIA datacenter GPUs (A100, H100, H200, L40S)"
+      - "NVIDIA professional GPUs (RTX A6000, A40)"
+      - "NVIDIA consumer GPUs (RTX 20/30/40 series)"
+      - "NVIDIA compute accelerators (T4, A10, A30)"
+    use_cases:
+      - "Multi-vendor AI training (Intel CPU + NVIDIA GPU)"
+      - "CUDA-accelerated deep learning workloads"
+      - "GPU compute for scientific HPC"
+      - "Hybrid rendering (Intel iGPU + NVIDIA dGPU)"
+      - "Heterogeneous AI inference (Intel NPU + NVIDIA GPU)"
+    security_hardening:
+      - "Stack protector (strong + clash protection)"
+      - "Control-Flow Integrity (CET/CFI, -fcf-protection=full)"
+      - "FORTIFY_SOURCE=3 (buffer overflow detection)"
+      - "Full RELRO (relocation read-only)"
+      - "Module signing for Secure Boot (MOK)"
+      - "IOMMU isolation (intel_iommu=on)"
+      - "Kernel lockdown mode support"
+      - "GPU device access restricted to render group"
+    compilation_flags:
+      optimization: "-O3 -march=native -mtune=native"
+      hardening: "-fstack-protector-strong -fstack-clash-protection -fcf-protection=full -D_FORTIFY_SOURCE=3"
+      linker: "-Wl,-z,relro,-z,now -Wl,-z,noexecstack"
+    integration:
+      build_method: "make (with HARDVINO flags)"
+      dkms: "Automatic rebuild on kernel updates"
+      module_load: "/etc/modules-load.d/nvidia.conf"
+      module_params: "/etc/modprobe.d/nvidia.conf"
+      signing: "MOK (Machine Owner Key) for Secure Boot"
+    dependencies:
+      kernel: "6.1+ (6.6+ recommended)"
+      gcc: "GCC 13+ (GCC 15 recommended for CET/CFI)"
+      cuda: "CUDA Toolkit 12.0+ (userspace, separate install)"
+      dkms: "DKMS 3.0+ (for auto-rebuild)"
+    prompt: >
+      NVIDIA Open GPU Kernel Modules - open-source kernel driver for NVIDIA
+      GPUs (Turing architecture and newer). Provides full GPU functionality
+      including CUDA compute, display output, and unified memory. Built with
+      HARDVINO security hardening: CET/CFI, FORTIFY=3, full RELRO, module
+      signing. Supports datacenter (A100, H100, H200), professional (RTX A6000),
+      and consumer (RTX 20/30/40 series) GPUs. Requires matching userspace
+      components (CUDA toolkit, nvidia-utils) installed separately. DKMS
+      integration ensures automatic rebuilds on kernel updates. Module signing
+      with MOK enables Secure Boot compatibility. Use for multi-vendor AI
+      (Intel NPU + NVIDIA GPU), CUDA ML training, scientific HPC, and hybrid
+      rendering. See docs/NVIDIA_INTEGRATION.md for hardened build procedure.
+
+# ============================================================================
 # METADATA
 # ============================================================================
 metadata:
-  version: "3.2.0"
-  submodule_count: 34
+  version: "3.3.0"
+  submodule_count: 35  # 34 Intel + 1 NVIDIA
   external_sdks: 1  # Qualcomm QNN (manual installation)
-  note: "HARDVINO supersedes upstream OpenVINO; Multi-vendor support (Intel + Qualcomm)"
+  note: "HARDVINO supersedes upstream OpenVINO; Multi-vendor support (Intel + Qualcomm + NVIDIA)"
   target_platform: "Intel Core Ultra 7 165H (Meteor Lake)"
   target_accelerators:
     - name: "NPU (VPU 3720)"

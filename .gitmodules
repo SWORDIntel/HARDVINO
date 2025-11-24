@@ -100,3 +100,6 @@
 [submodule "submodules/PLATFORM"]
 	path = submodules/PLATFORM
 	url = https://github.com/SWORDIntel/PLATFORM.git
+[submodule "submodules/nvidia-stack/drivers/open-gpu-kernel-modules"]
+	path = submodules/nvidia-stack/drivers/open-gpu-kernel-modules
+	url = https://github.com/NVIDIA/open-gpu-kernel-modules.git

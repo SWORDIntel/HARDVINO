@@ -4,7 +4,7 @@
 
 HARDVINO is a comprehensive, security-hardened build system for OpenVINO and OneAPI libraries, specifically optimized for the Intel Core Ultra 7 165H (Meteor Lake) with military-grade NPU support. This repository is designed to be integrated as a submodule into kernel compilation suites, providing hardened AI inference capabilities directly in kernel space.
 
-**Multi-Vendor Support**: HARDVINO now supports Qualcomm AI Engine Direct (QNN SDK) for heterogeneous AI deployments combining Intel + Qualcomm accelerators. See [QNN_INTEGRATION.md](docs/QNN_INTEGRATION.md) for details.
+**Multi-Vendor Support**: HARDVINO now supports both Qualcomm AI Engine Direct (QNN SDK) and NVIDIA open-gpu-kernel-modules for heterogeneous AI deployments combining Intel + Qualcomm + NVIDIA accelerators. See [QNN_INTEGRATION.md](docs/QNN_INTEGRATION.md) and [NVIDIA_INTEGRATION.md](docs/NVIDIA_INTEGRATION.md) for details.
 
 ## 🎯 AVX2-First Architecture
 
@@ -80,37 +80,48 @@ Intel Meteor Lake (Core Ultra 7 165H) provides **AVX-VNNI** on AVX2 width, deliv
   - **Security**: Hardened installation with systemd confinement and service account isolation
   - **Use Cases**: Multi-vendor inference, Snapdragon edge devices, Cloud AI 100 accelerators
 
+- **NVIDIA GPU Modules** - Open-source kernel drivers for NVIDIA GPUs (Turing and newer)
+  - **Installation**: Git submodule (open-source, built with HARDVINO hardening)
+  - **Documentation**: [docs/NVIDIA_INTEGRATION.md](docs/NVIDIA_INTEGRATION.md)
+  - **Security**: CET/CFI, FORTIFY=3, module signing for Secure Boot, IOMMU isolation
+  - **Use Cases**: CUDA ML training, GPU compute, hybrid rendering, heterogeneous AI
+
 ## Multi-Vendor AI Support
 
-HARDVINO supports heterogeneous AI deployments combining Intel and Qualcomm accelerators:
+HARDVINO supports heterogeneous AI deployments combining Intel, Qualcomm, and NVIDIA accelerators:
 
 - **Intel NPU (VPU 3720)** - Primary on-die accelerator for Meteor Lake
 - **Intel iGPU (Xe-LPG)** - Integrated graphics for compute workloads
 - **Qualcomm QNN** - Optional external SDK for Qualcomm AI hardware
+- **NVIDIA GPU** - Optional CUDA-capable GPUs (RTX 20/30/40 series, A100, H100, etc.)
 
 **Setup**:
 ```bash
 # 1. Build Intel stack (standard)
 ./build_all.sh
 
-# 2. Install Qualcomm QNN SDK (manual - see docs)
+# 2. Build NVIDIA GPU drivers (if you have NVIDIA GPU)
+./scripts/build_nvidia.sh --all
+
+# 3. Install Qualcomm QNN SDK (manual - see docs)
 # Follow: docs/QNN_INTEGRATION.md for hardened installation
 
-# 3. Verify QNN installation
+# 4. Verify installations
+./scripts/build_nvidia.sh --verify
 ./scripts/build_qnn.sh --verbose
 
-# 4. Use both accelerators in your application
-# Intel: via OpenVINO
+# 5. Use all accelerators in your application
+# Intel NPU: via OpenVINO NPU backend
+# Intel iGPU: via OpenVINO GPU backend
+# NVIDIA GPU: via CUDA/PyTorch
 # Qualcomm: via QNN SDK APIs
 ```
 
-**Security Note**: QNN SDK is closed-source. HARDVINO provides hardened installation procedures with:
-- Service account isolation (`qnnsvc:qnnsvc`)
-- Filesystem permissions (`0750 root:qnnsvc`)
-- Systemd hardening (`NoNewPrivileges`, `ProtectSystem=strict`, `MemoryDenyWriteExecute`)
-- Network isolation (optional `IPAddressDeny`)
+**Security Notes**:
+- **QNN SDK** (closed-source): Service account isolation, systemd hardening, network isolation
+- **NVIDIA Modules** (open-source): CET/CFI hardening, module signing (MOK), IOMMU isolation, render group restrictions
 
-See [docs/QNN_INTEGRATION.md](docs/QNN_INTEGRATION.md) for complete security hardening guide.
+See [docs/QNN_INTEGRATION.md](docs/QNN_INTEGRATION.md) and [docs/NVIDIA_INTEGRATION.md](docs/NVIDIA_INTEGRATION.md) for complete security hardening guides.
 
 ## System Requirements
 
@@ -561,6 +572,10 @@ Build scripts and configuration: MIT License
 
 - [Qualcomm AI Engine Direct (QNN SDK)](https://developer.qualcomm.com/software/qualcomm-ai-engine-direct-sdk)
 - [QNN Integration Guide (HARDVINO)](docs/QNN_INTEGRATION.md)
+- [NVIDIA Open GPU Kernel Modules](https://github.com/NVIDIA/open-gpu-kernel-modules)
+- [NVIDIA Integration Guide (HARDVINO)](docs/NVIDIA_INTEGRATION.md)
+- [NVIDIA Driver Documentation](https://docs.nvidia.com/)
+- [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit)
 - [Intel Stack Manifest](intel_stack.manifest.yml)
 
 ### Security & Hardening
@@ -582,10 +597,12 @@ For security vulnerabilities, please contact privately before public disclosure.
 
 - Based on ImageHarden security hardening principles
 - Intel OpenVINO team for NPU support
+- NVIDIA for open-source GPU kernel modules
+- Qualcomm for AI Engine Direct SDK
 - Meteor Lake optimization research by KYBERLOCK Tactical Computing Division
 
 ---
 
-**HARDVINO** - Hardened AI inference for mission-critical applications.
+**HARDVINO** - Hardened multi-vendor AI inference for mission-critical applications.
 
-Built with military-grade security for Intel Meteor Lake NPU VPU 3720.
+Built with military-grade security for Intel Meteor Lake NPU VPU 3720 + NVIDIA GPUs + Qualcomm accelerators.

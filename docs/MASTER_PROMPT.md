@@ -14,6 +14,7 @@ Truth sources:
 - NUC2.1 (SWORDIntel/NUC2.1): Movidius Myriad X / NCS2 ASIC stack with a modern Linux kernel driver and Rust NCAPI v2 userland.
 - Intel optional accelerators: Xe/iGPU compute, VAAPI media, QAT crypto/compression, DSA/IAA, IOAT DMA, plus Intel AI tools.
 - Qualcomm QNN SDK (optional): Qualcomm AI Engine Direct for multi-vendor AI inference on Qualcomm NPUs, Hexagon DSPs, and Cloud AI 100 accelerators.
+- NVIDIA GPU Stack (optional): NVIDIA open-gpu-kernel-modules for CUDA-accelerated ML training, GPU compute, and heterogeneous AI workloads.
 
 LLVM / LVMM baseline:
 - Default to LLVM/Clang toolchain: clang/clang++, lld, llvm-ar, llvm-nm, llvm-ranlib, llvm-objcopy, llvm-strip.
@@ -54,8 +55,11 @@ All other Intel repositories are treated as optional extensions for:
 | Component | Vendor | Purpose | Documentation |
 |-----------|--------|---------|---------------|
 | **Qualcomm QNN SDK** | Qualcomm | AI inference on Qualcomm NPUs, DSPs, and Cloud AI 100 accelerators | [QNN_INTEGRATION.md](QNN_INTEGRATION.md) |
+| **NVIDIA GPU Modules** | NVIDIA | CUDA-accelerated ML training, GPU compute, and heterogeneous AI inference | [NVIDIA_INTEGRATION.md](NVIDIA_INTEGRATION.md) |
 
-**Note**: Qualcomm QNN SDK is closed-source and requires manual installation via Qualcomm Package Manager (qpm-cli). See [QNN_INTEGRATION.md](QNN_INTEGRATION.md) for hardened installation procedure.
+**Notes**:
+- **Qualcomm QNN SDK** is closed-source and requires manual installation via Qualcomm Package Manager (qpm-cli).
+- **NVIDIA GPU Modules** are open-source (MIT/GPL-2.0) and built as git submodule with HARDVINO hardening flags.
 
 ## Security Profile
 
