@@ -144,7 +144,8 @@ show_banner() {
  Target: Intel Core Ultra 7 165H (Meteor Lake)
 EOF
     echo -e "${NC}"
-    echo "Submodules: 35 | Jobs: ${JOBS}"
+    echo "Submodules: 34 | HARDVINO supersedes OpenVINO"
+    echo "Jobs: ${JOBS}"
     echo ""
 }
 
@@ -157,8 +158,9 @@ init_submodules() {
     cd "${HARDVINO_ROOT}"
 
     # Core submodules (required)
+    # Note: HARDVINO supersedes upstream OpenVINO - no separate openvino submodule
     log_info "Initializing core submodules..."
-    git submodule update --init --depth 1 openvino oneapi-tbb oneapi-dnn NUC2.1
+    git submodule update --init --depth 1 oneapi-tbb oneapi-dnn NUC2.1
 
     # Extended submodules
     log_info "Initializing extended Intel stack..."
@@ -170,7 +172,7 @@ init_submodules() {
         git submodule update --init --depth 1 submodules/PLATFORM
     fi
 
-    log_info "All submodules initialized (35 total)"
+    log_info "All submodules initialized (34 total)"
 }
 
 # ============================================================================

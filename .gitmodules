@@ -4,9 +4,6 @@
 [submodule "oneapi-dnn"]
 	path = oneapi-dnn
 	url = https://github.com/oneapi-src/oneDNN.git
-[submodule "openvino"]
-	path = openvino
-	url = https://github.com/openvinotoolkit/openvino.git
 [submodule "NUC2.1"]
 	path = NUC2.1
 	url = https://github.com/SWORDIntel/NUC2.1

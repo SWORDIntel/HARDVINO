@@ -3,19 +3,21 @@
 # HARDVINO / DSMIL Platform
 # ============================================================================
 #
-# This manifest defines all Intel stack components with:
-#   - Repository locations
-#   - Installation paths
-#   - Per-component AI prompts for integration guidance
+# HARDVINO supersedes upstream OpenVINO with:
+#   - Hardened build (CET/CFI, RELRO, FORTIFY=3)
+#   - Meteor Lake optimization (AVX2, AVX-VNNI)
+#   - Integrated oneDNN, oneTBB
+#   - NPU VPU 3720 support
 #
 # Component Categories:
-#   - core: Required dependencies (HARDVINO, NUC2.1)
+#   - core: HARDVINO (supersedes OpenVINO), NUC2.1
 #   - runtimes: Runtime libraries for accelerators
 #   - toolchains: Build tools and libraries
 #   - kernel_drivers: Kernel-level device drivers
 #   - profiling_and_tools: Performance and optimization tools
+#   - platform: DSMIL PLATFORM integration
 #
-# Total: 27 submodules covering full Intel AI compute stack
+# Total: 34 submodules
 #
 # ============================================================================
 
@@ -27,13 +29,14 @@ intel_stack:
   core:
     hardvino:
       repo: https://github.com/SWORDIntel/HARDVINO
-      path: submodules/HARDVINO
+      supersedes: "openvinotoolkit/openvino"
       required: true
       prompt: >
-        Hardened OpenVINO/oneAPI toolchain tuned for Intel Core Ultra 7 165H and
-        the Meteor Lake NPU. Builds OpenVINO, oneDNN, oneTBB and related libs
-        with LLVM/Clang, AVX2/AVX-VNNI, CET/CFI, RELRO, and FORTIFY=3. This is
-        the only entrypoint for OpenVINO in DSMIL.
+        HARDVINO supersedes upstream OpenVINO. Provides hardened OpenVINO/oneAPI
+        toolchain tuned for Intel Core Ultra 7 165H and Meteor Lake NPU. Builds
+        with LLVM/Clang, AVX2/AVX-VNNI, CET/CFI, RELRO, and FORTIFY=3. Integrates
+        oneDNN and oneTBB. This is the ONLY OpenVINO entrypoint - do not use
+        upstream openvino directly.
 
     nuc2_1:
       repo: https://github.com/SWORDIntel/NUC2.1
@@ -381,8 +384,9 @@ intel_stack:
 # METADATA
 # ============================================================================
 metadata:
-  version: "3.0.0"
-  submodule_count: 35
+  version: "3.1.0"
+  submodule_count: 34
+  note: "HARDVINO supersedes upstream OpenVINO"
   target_platform: "Intel Core Ultra 7 165H (Meteor Lake)"
   target_accelerators:
     - name: "NPU (VPU 3720)"
