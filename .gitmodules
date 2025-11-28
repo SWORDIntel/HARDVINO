@@ -107,9 +107,9 @@
 [submodule "submodules/intel-stack/tools/ai-containers"]
     path = submodules/intel-stack/tools/ai-containers
     url  = https://github.com/intel/ai-containers.git
-[submodule "simon-speck-supercop"]
-	path = simon-speck-supercop
+[submodule "SIMON/simon-speck-supercop"]
+	path = SIMON/simon-speck-supercop
 	url = https://github.com/nsacyber/simon-speck-supercop
-[submodule "simon-speck"]
-	path = simon-speck
+[submodule "SIMON/simon-speck"]
+	path = SIMON/simon-speck
 	url = https://github.com/nsacyber/simon-speck
