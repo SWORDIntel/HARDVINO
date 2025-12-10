@@ -57,12 +57,22 @@ load_meteor_flags() {
     if [ -f "${flags_file}" ]; then
         # shellcheck disable=SC1090
         source "${flags_file}"
-        export CFLAGS="${CFLAGS_OPTIMAL} ${CFLAGS_SECURITY}"
-        export CXXFLAGS="${CXXFLAGS_OPTIMAL} ${CFLAGS_SECURITY}"
+        
+        # Check if AMX is available (engineering samples may support it)
+        # Use CFLAGS_MEGA_AMX if AMX extensions are detected, otherwise CFLAGS_MEGA
+        # CFLAGS_MEGA includes: AES-NI (-maes, -mvaes), AVX-VNNI, and all optimizations
+        if grep -q "amx" /proc/cpuinfo 2>/dev/null && [ -n "${CFLAGS_MEGA_AMX:-}" ]; then
+            export CFLAGS="${CFLAGS_MEGA_AMX} ${CFLAGS_SECURITY}"
+            export CXXFLAGS="${CFLAGS_MEGA_AMX} ${CFLAGS_SECURITY}"
+            log_info "Applied METEOR TRUE MEGA + AMX + SECURITY flags (max performance with AMX acceleration)"
+        else
+            export CFLAGS="${CFLAGS_MEGA} ${CFLAGS_SECURITY}"
+            export CXXFLAGS="${CFLAGS_MEGA} ${CFLAGS_SECURITY}"
+            log_info "Applied METEOR TRUE MEGA + SECURITY flags (max performance: includes AES-NI, AVX-VNNI)"
+        fi
         export LDFLAGS="${LDFLAGS_OPTIMAL} ${LDFLAGS_SECURITY}"
         export KCFLAGS="${KCFLAGS} ${CFLAGS_SECURITY}"
         export KCPPFLAGS="${KCFLAGS}"
-        log_info "Applied METEOR TRUE OPTIMAL + SECURITY flags (defensive workload: preserves precision + hardening)"
     else
         log_warn "METEOR_TRUE_FLAGS.sh not found; using toolchain defaults"
     fi
