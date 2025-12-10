@@ -28,43 +28,56 @@ export STRIP=llvm-strip
 export LD=lld     # for userland; kernel via LLVM=1
 
 # ============================================================================
-# METEOR LAKE - OPTIMAL FLAGS
+# METEOR LAKE - OPTIMAL FLAGS (AI/ML Optimized)
 # Intel Core Ultra 7 165H - Full feature set
 # ============================================================================
 
-# Check if compiler supports meteorlake, fall back to alderlake
-if ${CC:-clang} -march=meteorlake -E - < /dev/null > /dev/null 2>&1; then
-    MARCH="meteorlake"
+# Try to source optimal flags from dedicated script
+if [[ -f "${SCRIPT_DIR}/optimal_flags_hardvino.sh" ]]; then
+    source "${SCRIPT_DIR}/optimal_flags_hardvino.sh"
+    # Use the optimal flags from the dedicated script
+    export CFLAGS_OPTIMAL="${CFLAGS_OPTIMAL_HARDVINO:-${CFLAGS_OPTIMAL}}"
+    export LDFLAGS_OPTIMAL="${LDFLAGS_OPTIMAL_HARDVINO:-${LDFLAGS_OPTIMAL}}"
 else
-    echo "[INFO] Compiler does not support -march=meteorlake, falling back to alderlake"
-    MARCH="alderlake"
+    # Fallback to basic flags if optimal script not found
+    echo "[WARN] optimal_flags_hardvino.sh not found, using basic flags"
+    
+    # Check if compiler supports meteorlake, fall back to alderlake
+    if ${CC:-clang} -march=meteorlake -E - < /dev/null > /dev/null 2>&1; then
+        MARCH="meteorlake"
+    else
+        echo "[INFO] Compiler does not support -march=meteorlake, falling back to alderlake"
+        MARCH="alderlake"
+    fi
+
+    # SIMD/ISA extensions for Meteor Lake
+    METEOR_LAKE_ISA="-msse4.2 -mpopcnt -mavx -mavx2 -mfma -mf16c -mbmi -mbmi2 -mlzcnt -mmovbe"
+    METEOR_LAKE_VNNI="-mavxvnni -mavxvnniint8"
+    METEOR_LAKE_CRYPTO="-maes -mvaes -mpclmul -mvpclmulqdq -msha -mgfni"
+    METEOR_LAKE_MISC="-madx -mclflushopt -mclwb -mcldemote -mmovdiri -mmovdir64b -mwaitpkg -mserialize -mtsxldtrk -muintr -mprefetchw -mprfchw -mrdrnd -mrdseed"
+
+    # Combined ISA flags
+    export METEOR_LAKE_FLAGS="${METEOR_LAKE_ISA} ${METEOR_LAKE_VNNI} ${METEOR_LAKE_CRYPTO} ${METEOR_LAKE_MISC}"
+
+    # Base optimization flags
+    export CFLAGS_OPTIMAL="-O3 -pipe -fomit-frame-pointer -funroll-loops -fstrict-aliasing -fno-plt -fdata-sections -ffunction-sections -flto=auto -march=${MARCH} -mtune=${MARCH} ${METEOR_LAKE_FLAGS}"
+    export LDFLAGS_OPTIMAL="-Wl,--as-needed -Wl,--gc-sections -Wl,-O1 -Wl,--hash-style=gnu -flto=auto"
 fi
-
-# SIMD/ISA extensions for Meteor Lake
-METEOR_LAKE_ISA="-msse4.2 -mpopcnt -mavx -mavx2 -mfma -mf16c -mbmi -mbmi2 -mlzcnt -mmovbe"
-METEOR_LAKE_VNNI="-mavxvnni"
-METEOR_LAKE_CRYPTO="-maes -mvaes -mpclmul -mvpclmulqdq -msha -mgfni"
-METEOR_LAKE_MISC="-madx -mclflushopt -mclwb -mcldemote -mmovdiri -mmovdir64b -mwaitpkg -mserialize -mtsxldtrk -muintr -mprefetchw -mprfchw -mrdrnd -mrdseed"
-
-# Combined ISA flags
-export METEOR_LAKE_FLAGS="${METEOR_LAKE_ISA} ${METEOR_LAKE_VNNI} ${METEOR_LAKE_CRYPTO} ${METEOR_LAKE_MISC}"
-
-# ============================================================================
-# OPTIMAL C FLAGS (copy & paste ready)
-# ============================================================================
-
-export CFLAGS_OPTIMAL="-O3 -pipe -fomit-frame-pointer -funroll-loops -fstrict-aliasing -fno-plt -fdata-sections -ffunction-sections -flto=auto -march=${MARCH} -mtune=${MARCH} ${METEOR_LAKE_FLAGS}"
-
-export LDFLAGS_OPTIMAL="-Wl,--as-needed -Wl,--gc-sections -Wl,-O1 -Wl,--hash-style=gnu -flto=auto"
 
 # ============================================================================
 # HARDENED C FLAGS (HARDVINO default - adds security)
 # ============================================================================
 
 # Security hardening (ImageHarden-inspired)
+# Note: May already be included in CFLAGS_OPTIMAL_HARDVINO
 CFLAGS_HARDENING="-fstack-protector-strong -fstack-clash-protection -fcf-protection=full -D_FORTIFY_SOURCE=3 -fPIC"
 
-export CFLAGS="${CFLAGS_OPTIMAL} ${CFLAGS_HARDENING}"
+# Merge hardening if not already included
+if [[ "$CFLAGS_OPTIMAL" != *"fstack-protector-strong"* ]]; then
+    export CFLAGS="${CFLAGS_OPTIMAL} ${CFLAGS_HARDENING}"
+else
+    export CFLAGS="${CFLAGS_OPTIMAL}"
+fi
 export CXXFLAGS="${CFLAGS}"
 
 # Full RELRO for hardened linking
