@@ -47,10 +47,10 @@ log_section() { echo -e "\n${CYAN}${BOLD}=== $1 ===${NC}\n"; }
 log_header()  { echo -e "\n${BLUE}${BOLD}$1${NC}"; }
 
 # ============================================================================
-# METEOR TRUE FLAG PROFILE (OPTIMAL + SECURITY for defensive workloads)
+# METEOR TRUE FLAG PROFILE (MEGA + SECURITY for maximum performance)
 # Applied only to build steps (core/extended), not to dependency installs.
-# Combines OPTIMAL flags (preserves numerical precision) with SECURITY flags
-# (stack protection, CFI, hardening) for defensive AI/ML workloads.
+# Uses CFLAGS_MEGA (maximum performance without unsafe math) + SECURITY flags
+# Includes: AES-NI (-maes, -mvaes), AVX-VNNI, and optionally AMX if available
 # ============================================================================
 load_meteor_flags() {
     local flags_file="${SCRIPT_DIR}/METEOR_TRUE_FLAGS.sh"
